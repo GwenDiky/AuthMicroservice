@@ -122,7 +122,11 @@ celerybeat.pid
 *.sage.py
 
 # Environments
+<<<<<<< HEAD
 infastracture/.env
+=======
+.env
+>>>>>>> 057bb3f (Initial commit)
 .venv
 env/
 venv/
@@ -282,3 +286,4 @@ docker/data
 
 /alembic/
 /migration/
+
