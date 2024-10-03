@@ -273,3 +273,4 @@ rabbitmq-data/
 rabbitmq-log/
 
 .idea/
+poetry.lock
