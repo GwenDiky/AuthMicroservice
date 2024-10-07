@@ -1,7 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import patch
-from auth.domain.entities.user import User
 from auth.main import app
 from datetime import date
 from uuid import uuid4

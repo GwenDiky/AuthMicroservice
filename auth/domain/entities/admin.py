@@ -1,5 +1,5 @@
-from user import User, UserRole
+from user import UserSchema, UserRole
 
 
-class Admin(User):
+class AdminSchema(UserSchema):
     role: UserRole = UserRole.ADMIN

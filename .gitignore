@@ -273,4 +273,10 @@ rabbitmq-data/
 rabbitmq-log/
 
 .idea/
-poetry.lock
+infrastracture/poetry.lock
+
+docker/data
+.idea
+.DS_Store
+**/.DS_Store
+

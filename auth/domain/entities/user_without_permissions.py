@@ -1,5 +1,5 @@
-from user import User, UserRole
+from user import UserSchema, UserRole
 
 
-class UserWithoutPermissions(User):
+class UserWithoutPermissionsSchema(UserSchema):
     role: UserRole = UserRole.USER_WITHOUT_PERMISSIONS
