@@ -15,6 +15,9 @@ pydantic-extra-types = "^2.9.0"
 alembic = "^1.13.3"
 phonenumbers = "^8.13.46"
 pytest = "^8.3.3"
+python-dotenv = "^1.0.1"
+bcrypt = "^4.2.0"
+python-multipart = "^0.0.12"
 
 
 [tool.poetry.group.dev.dependencies]
