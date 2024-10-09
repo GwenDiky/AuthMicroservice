@@ -32,7 +32,7 @@ async def encode_jwt(
 
     to_encode.update(
         exp=expire,
-        iat=now,
+        iat=int(time.time()),
     )
     token = jwt.encode(to_encode, secret, algorithm=algorithm)
     return token
@@ -45,7 +45,8 @@ async def decode_jwt(
 ) -> dict:
     try:
         decoded_token = jwt.decode(token, secret, algorithms=[algorithm])
-        return decoded_token if decoded_token["expires"] >= time.time() else None
+        print(decoded_token)
+        return decoded_token
     except Exception as e:
         return {"error": e}
 

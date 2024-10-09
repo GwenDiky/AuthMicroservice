@@ -1,10 +1,12 @@
 """"
 сбросить/изменить пароль
 """
+import os
+
 from fastapi import APIRouter, Depends, Form, HTTPException, status
 from auth.domain.entities.user import UserSchema, UserCreate
 from auth.domain.entities.token import Token
-from fastapi.security import HTTPBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from .utils import (
     utils_jwt as auth_utils,
     utils_users as user_utils
@@ -17,6 +19,11 @@ from uuid import uuid4
 from sqlalchemy.orm import Session
 from auth.domain.entities.user import UserRole
 import bcrypt
+from fastapi_jwt import JwtAccessBearer, JwtAuthorizationCredentials
+import jwt
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 user_router = APIRouter()
 http_bearer = HTTPBearer()
@@ -65,7 +72,7 @@ async def validate_auth_user_login(
         username: str = Form(),
         password: str = Form(),
 ):
-    if not (user_repo.get_user_by_username(username)):
+    if not (await user_repo.get_user_by_username(username)):
         raise unauthed_exc
     else:
         user = await user_repo.get_user_by_username(username)
@@ -79,7 +86,6 @@ async def validate_auth_user_login(
 async def login(
         user: UserSchema = Depends(validate_auth_user_login),
 ):
-
     if not user.is_active:
         raise HTTPException(status_code=403, detail="user is unactive")
 
@@ -89,7 +95,7 @@ async def login(
         "username": user.username,
         "email": user.email if user.email else None,
         "created_at": user.created_at.isoformat() if user.created_at else None,
-        "date_of_birth":  user.date_of_birth.isoformat() if user.date_of_birth else None,
+        "date_of_birth": user.date_of_birth.isoformat() if user.date_of_birth else None,
         "phone": user.phone_number if user.phone_number else None
     }
     token = await auth_utils.encode_jwt(jwt_payload)
@@ -98,6 +104,36 @@ async def login(
         token_type="Bearer"
     )
 
+
+@user_router.get("/me")
+async def get_current_user(token: HTTPAuthorizationCredentials = Depends(http_bearer)):
+    try:
+        token_credentials = token.credentials.replace("Bearer ", "")
+        payload = await auth_utils.decode_jwt(token_credentials)
+
+        logging.info(f"username: {payload.get('username')}"
+                     f"email: {payload.get('email')}"
+                     f"created_at: {payload.get('created_at')}"
+                     f"date_of_birth: {payload.get('date_of_birth')}"
+                     f"phone: {payload.get('phone')}"
+        )
+
+        return await user_repo.get_user_by_username(payload.get("username"))
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+
+# try:
+#     payload = decodeJWT(token)
+#     username: str = payload.get("sub")
+#     if username is None:
+#         return None
+# except JWTError:
+#     return None
+# user = USERS.get(username)
+# if user is None:
+#     return None
+# return user
 
 @user_router.post("/refresh-token", response_model=Token)
 async def refresh_token(
@@ -117,27 +153,3 @@ async def refresh_token(
         access_token=token,
         token_type="Bearer"
     )
-
-
-@user_router.get("/me")
-async def get_current_user(user: UserSchema = Depends(user_utils.get_current_auth_user)):
-    # if user.active:
-    #     return user
-    # raise HTTPException(
-    #     status_code=status.HTTP_403_FORBIDDEN,
-    #     detail="user unactive",
-    # )
-    return user
-
-    ...
-    # try:
-    #     payload = decodeJWT(token)
-    #     username: str = payload.get("sub")
-    #     if username is None:
-    #         return None
-    # except JWTError:
-    #     return None
-    # user = USERS.get(username)
-    # if user is None:
-    #     return None
-    # return user

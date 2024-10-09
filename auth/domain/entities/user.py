@@ -20,7 +20,7 @@ def get_today():
 
 class UserSchema(BaseModel):
     model_config = ConfigDict(
-        strict=True)  # Pydantic не будет автоматически преобразовывать типы данных для несовпадающих типов.
+        strict=True)  # pydantic will not automatically convert data types for non-matching types.
 
     id: UUID = Field(default_factory=uuid4)  # generate automatic
     username: str
@@ -33,13 +33,6 @@ class UserSchema(BaseModel):
     password: bytes
     is_active: bool = True
 
-    # order_by: Literal[]
-    # @field_validator('date_of_birth')
-    # def check_date_of_birth(cls, v) -> str:
-    #     if v >= date.today():
-    #         raise ValueError('date_of_birth must be less than today')
-    #     return v
-    #
 
 class UserCreate(BaseModel):
     username: Annotated[str, MinLen(3), MaxLen(50)]
@@ -50,8 +43,3 @@ class UserCreate(BaseModel):
 
     is_active: bool = True
     date_of_birth: Optional[date] = None
-
-# class UserLoginSchema(BaseModel):
-#     email: EmailStr
-#     password: str
-#

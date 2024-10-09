@@ -10,8 +10,10 @@ import os
 from dotenv import load_dotenv
 from .base import Base
 from infrastracture.database.models.user import User
+import logging
 
 load_dotenv()
+
 
 
 class UserRepository:
@@ -41,11 +43,11 @@ class UserRepository:
                 user = result.scalar_one_or_none()
                 if not user:
                     return "user wasn't found. check up your statement again"
-                # return (f"data of {username}:\n "
-                #         f"email: {user.email}\n "
-                #         f"birthday: {user.date_of_birth}\n"
-                #         f"phone: {user.phone_number}\n "
-                #         f"valid: {user.is_active}\n") // make logs!
+                logging.info(f"data of {username}:\n "
+                             f"email: {user.email}\n "
+                             f"birthday: {user.date_of_birth}\n"
+                             f"phone: {user.phone_number}\n "
+                             f"valid: {user.is_active}\n")
                 return user
             except Exception as e:
                 print(f"error occurred: {e}")
