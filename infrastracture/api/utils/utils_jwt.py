@@ -28,14 +28,14 @@ async def encode_jwt(
     if expire_timedelta:
         expire = now + expire_timedelta
     else:
-        expire = now + timedelta(minutus=expire)
+        expire = now + timedelta(minutes=expire)
 
     to_encode.update(
         exp=expire,
         iat=now,
     )
-    token = jwt.encode(to_encode, secret, algorithm=[algorithm])
-    return await token_response(token)
+    token = jwt.encode(to_encode, secret, algorithm=algorithm)
+    return token
 
 
 async def decode_jwt(
@@ -51,11 +51,16 @@ async def decode_jwt(
 
 
 async def hash_password(
-        password: str,
-) -> bytes:
+        password: str | bytes,
+) -> str:
+    if isinstance(password, bytes):
+        password = password.decode('utf-8')
+
     salt = bcrypt.gensalt()
     pwd_bytes: bytes = password.encode()
-    return bcrypt.hashpw(pwd_bytes, salt)
+
+    hashed = bcrypt.hashpw(pwd_bytes, salt)
+    return hashed.decode('utf-8')
 
 
 async def validate_password(
