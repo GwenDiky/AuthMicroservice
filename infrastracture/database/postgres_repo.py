@@ -11,9 +11,10 @@ from dotenv import load_dotenv
 from .base import Base
 from infrastracture.database.models.user import User
 import logging
+from sqlalchemy.exc import SQLAlchemyError
+from ..exceptions import BadRequestException
 
 load_dotenv()
-
 
 
 class UserRepository:
@@ -43,19 +44,38 @@ class UserRepository:
                 user = result.scalar_one_or_none()
                 if not user:
                     return "user wasn't found. check up your statement again"
+                logging.info(f"data of {user.username}:\n "
+                             f"email: {user.email}\n "
+                             f"birthday: {user.date_of_birth}\n"
+                             f"phone: {user.phone_number}\n "
+                             f"valid: {user.is_active}\n")
+                return user
+            except SQLAlchemyError as db_error:
+                logging.error(f"Database error {db_error}")
+                raise BadRequestException(f"Database error: {db_error}")
+
+    async def get_user_by_id(self, id: int):
+        async with self.sessionLocalAsync(expire_on_commit=False) as session:
+            try:
+                query = select(User).where(User.id == id)
+                result = await session.execute(query)
+                user = result.scalar_one_or_none()
+                if not user:
+                    return "user wasn't found. check up your statement again"
                 logging.info(f"data of {username}:\n "
                              f"email: {user.email}\n "
                              f"birthday: {user.date_of_birth}\n"
                              f"phone: {user.phone_number}\n "
                              f"valid: {user.is_active}\n")
                 return user
-            except Exception as e:
-                print(f"error occurred: {e}")
+            except SQLAlchemyError as db_error:
+                logging.error(f"Database error {db_error}")
+                raise BadRequestException(f"Database error: {db_error}")
 
-    async def get_current_user(self):
+    async def change_password_of_current_user(self, new_password):
         ...
 
-    async def change_password_of_current_user(self):
+    async def get_user_by_token(self):
         ...
 
     async def get_db(self) -> AsyncSession:

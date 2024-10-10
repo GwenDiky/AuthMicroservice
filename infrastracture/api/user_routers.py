@@ -1,9 +1,14 @@
-""""
-сбросить/изменить пароль
-"""
 import os
-
-from fastapi import APIRouter, Depends, Form, HTTPException, status
+from fastapi import APIRouter, Depends, Form
+from ..exceptions import (
+    AuthFailedException,
+    InactiveUserException,
+    SignUpFailedException,
+    InvalidTokenException,
+    AuthTokenExpiredException,
+    BadRequestException
+)
+from sqlalchemy.exc import SQLAlchemyError
 from auth.domain.entities.user import UserSchema, UserCreate
 from auth.domain.entities.token import Token
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -23,17 +28,13 @@ from fastapi_jwt import JwtAccessBearer, JwtAuthorizationCredentials
 import jwt
 import logging
 
+
 logging.basicConfig(level=logging.INFO)
 
 user_router = APIRouter()
 http_bearer = HTTPBearer()
 
 user_repo = UserRepository()
-
-unauthed_exc = HTTPException(
-    status_code=status.HTTP_401_UNAUTHORIZED,
-    detail="Invalid username or password",
-)
 
 
 @user_router.post("/signup")
@@ -52,19 +53,16 @@ async def signup(user: UserCreate, db: Session = Depends(user_repo.get_db)):
     try:
         await db.commit()
         await db.refresh(new_user)
-    except Exception as e:
+    except SQLAlchemyError as db_error:
         await db.rollback()
-        print(f"Error occurred: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="some of fields are incorrect. check up u'r data & try again",
-        )
+        logging.error(f"Error occurred: {db_error}")
+        raise SignUpFailedException
     return {"message": "User created", "user": new_user}
 
 
 async def compare_passwords(password, hashed_password):
     if not bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8')):
-        raise unauthed_exc
+        raise AuthFailedException
     return True
 
 
@@ -73,7 +71,7 @@ async def validate_auth_user_login(
         password: str = Form(),
 ):
     if not (await user_repo.get_user_by_username(username)):
-        raise unauthed_exc
+        raise AuthFailedException
     else:
         user = await user_repo.get_user_by_username(username)
 
@@ -87,7 +85,7 @@ async def login(
         user: UserSchema = Depends(validate_auth_user_login),
 ):
     if not user.is_active:
-        raise HTTPException(status_code=403, detail="user is unactive")
+        raise InactiveUserException
 
     jwt_payload = {
         "sub": user.id,
@@ -116,24 +114,14 @@ async def get_current_user(token: HTTPAuthorizationCredentials = Depends(http_be
                      f"created_at: {payload.get('created_at')}"
                      f"date_of_birth: {payload.get('date_of_birth')}"
                      f"phone: {payload.get('phone')}"
-        )
+                     )
 
         return await user_repo.get_user_by_username(payload.get("username"))
-    except Exception as e:
-        raise HTTPException(status_code=401, detail="Invalid token")
+    except jwt.ExpiredSignatureError:
+        raise AuthTokenExpiredException
+    except jwt.InvalidTokenError:
+        raise InvalidTokenException
 
-
-# try:
-#     payload = decodeJWT(token)
-#     username: str = payload.get("sub")
-#     if username is None:
-#         return None
-# except JWTError:
-#     return None
-# user = USERS.get(username)
-# if user is None:
-#     return None
-# return user
 
 @user_router.post("/refresh-token", response_model=Token)
 async def refresh_token(
@@ -153,3 +141,18 @@ async def refresh_token(
         access_token=token,
         token_type="Bearer"
     )
+
+
+@user_router.post("/logout")
+async def logout():
+    ...
+
+
+@user_router.put("/change-password")
+async def change_password():
+    ...
+
+
+@user_router.post("/forgot-password")
+async def forgot_password():
+    ...

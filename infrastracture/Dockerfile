@@ -11,11 +11,9 @@ ENV POETRY_NO_INTERACTION=1 \
 
 WORKDIR /app
 
-#COPY pyproject.toml poetry.lock ./
 COPY pyproject.toml poetry.lock ./
 RUN poetry install --no-root
 
 COPY . .
-#COPY ./auth /app
 
 CMD ["uvicorn", "auth.main:app", "--host", "0.0.0.0", "--port", "8083", "--reload"]

@@ -5,6 +5,7 @@ from typing import Dict
 import os
 from dotenv import load_dotenv
 import bcrypt
+from ...exceptions import InvalidTokenException
 
 load_dotenv()
 
@@ -45,10 +46,9 @@ async def decode_jwt(
 ) -> dict:
     try:
         decoded_token = jwt.decode(token, secret, algorithms=[algorithm])
-        print(decoded_token)
         return decoded_token
-    except Exception as e:
-        return {"error": e}
+    except jwt.InvalidTokenError:
+        raise InvalidTokenException
 
 
 async def hash_password(
