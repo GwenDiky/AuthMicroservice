@@ -56,3 +56,4 @@ def test_create_user_with_mock(mock_jsonable_encoder, test_user):
 
     assert response.status_code == 200
     assert response.json() == test_user
+

@@ -108,9 +108,14 @@ async def get_current_user(user: UserSchema = Depends(user_utils.get_current_aut
 
 @user_router.post("/refresh-token", response_model=Token)
 async def refresh_token(
-    token: Token = Depends(user_utils.refresh_token_of_current_user)
+        token: Token = Depends(user_utils.refresh_token_of_current_user)
 ):
     return token
+
+
+@user_router.post("/get-info-of-user-by-token")
+async def get_info_by_token(user: UserSchema = Depends(user_utils.get_info_of_user_by_token)):
+    return user
 
 
 @user_router.post("/logout")
