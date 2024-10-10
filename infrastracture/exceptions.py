@@ -23,7 +23,7 @@ class InactiveUserException(HTTPException):
         )
 
 
-class SignUpFailedException:
+class SignUpFailedException(HTTPException):
     def __init__(self) -> None:
         super().__init__(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -32,7 +32,7 @@ class SignUpFailedException:
         )
 
 
-class InvalidTokenException:
+class InvalidTokenException(HTTPException):
     def __init__(self) -> None:
         super().__init__(
             status_code=status.HTTP_401_UNAUTHORIZED,

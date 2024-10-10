@@ -101,25 +101,6 @@ async def login(
     )
 
 
-# @user_router.get("/me")
-# async def get_current_user(token: HTTPAuthorizationCredentials = Depends(http_bearer)):
-#     try:
-#         token_credentials = token.credentials.replace("Bearer ", "")
-#         payload = await auth_utils.decode_jwt(token_credentials)
-#
-#         logging.info(f"username: {payload.get('username')}"
-#                      f"email: {payload.get('email')}"
-#                      f"created_at: {payload.get('created_at')}"
-#                      f"date_of_birth: {payload.get('date_of_birth')}"
-#                      f"phone: {payload.get('phone')}"
-#                      )
-#
-#         return await user_repo.get_user_by_username(payload.get("username"))
-#     except jwt.ExpiredSignatureError:
-#         raise AuthTokenExpiredException
-#     except jwt.InvalidTokenError:
-#         raise InvalidTokenException
-
 @user_router.get("/me")
 async def get_current_user(user: UserSchema = Depends(user_utils.get_current_auth_user)):
     return user
@@ -127,22 +108,9 @@ async def get_current_user(user: UserSchema = Depends(user_utils.get_current_aut
 
 @user_router.post("/refresh-token", response_model=Token)
 async def refresh_token(
-        user: UserSchema = Depends(validate_auth_user_login)
+    token: Token = Depends(user_utils.refresh_token_of_current_user)
 ):
-    jwt_payload = {
-        "sub": user.id,
-        "id": user.id,
-        "username": user.username,
-        "email": user.email,
-        "created_at": date.today(),
-        "date_of_birth": user.date_of_birth,
-        "phone": user.phone
-    }
-    token = auth_utils.encode_jwt(jwt_payload)
-    return Token(
-        access_token=token,
-        token_type="Bearer"
-    )
+    return token
 
 
 @user_router.post("/logout")

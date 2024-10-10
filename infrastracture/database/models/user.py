@@ -25,4 +25,16 @@ class User(Base):
     # role_id = Column(Integer, ForeignKey("roles.id"), nullable=True)
     # role = relationship("Role", back_populates="users")
 
+    def to_dict(self):
+        return {
+            "username": self.username,
+            "password": self.password,
+            "email": self.email,
+            "created_at": self.created_at.isoformat(),
+            "date_of_birth": self.date_of_birth.isoformat(),
+            "phone": self.phone_number,
+            "role": self.role,
+            "is_active": self.is_active,
+        }
+
 
