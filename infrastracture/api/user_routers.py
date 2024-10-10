@@ -27,14 +27,12 @@ import bcrypt
 from fastapi_jwt import JwtAccessBearer, JwtAuthorizationCredentials
 import jwt
 import logging
+from ..security.config import user_repo, setup_logging
 
-
-logging.basicConfig(level=logging.INFO)
+setup_logging()
 
 user_router = APIRouter()
 http_bearer = HTTPBearer()
-
-user_repo = UserRepository()
 
 
 @user_router.post("/signup")
@@ -103,24 +101,28 @@ async def login(
     )
 
 
+# @user_router.get("/me")
+# async def get_current_user(token: HTTPAuthorizationCredentials = Depends(http_bearer)):
+#     try:
+#         token_credentials = token.credentials.replace("Bearer ", "")
+#         payload = await auth_utils.decode_jwt(token_credentials)
+#
+#         logging.info(f"username: {payload.get('username')}"
+#                      f"email: {payload.get('email')}"
+#                      f"created_at: {payload.get('created_at')}"
+#                      f"date_of_birth: {payload.get('date_of_birth')}"
+#                      f"phone: {payload.get('phone')}"
+#                      )
+#
+#         return await user_repo.get_user_by_username(payload.get("username"))
+#     except jwt.ExpiredSignatureError:
+#         raise AuthTokenExpiredException
+#     except jwt.InvalidTokenError:
+#         raise InvalidTokenException
+
 @user_router.get("/me")
-async def get_current_user(token: HTTPAuthorizationCredentials = Depends(http_bearer)):
-    try:
-        token_credentials = token.credentials.replace("Bearer ", "")
-        payload = await auth_utils.decode_jwt(token_credentials)
-
-        logging.info(f"username: {payload.get('username')}"
-                     f"email: {payload.get('email')}"
-                     f"created_at: {payload.get('created_at')}"
-                     f"date_of_birth: {payload.get('date_of_birth')}"
-                     f"phone: {payload.get('phone')}"
-                     )
-
-        return await user_repo.get_user_by_username(payload.get("username"))
-    except jwt.ExpiredSignatureError:
-        raise AuthTokenExpiredException
-    except jwt.InvalidTokenError:
-        raise InvalidTokenException
+async def get_current_user(user: UserSchema = Depends(user_utils.get_current_auth_user)):
+    return user
 
 
 @user_router.post("/refresh-token", response_model=Token)

@@ -1,5 +1,6 @@
 from fastapi import HTTPException, status
 from sqlalchemy.exc import SQLAlchemyError
+from typing import Any
 
 headers = {"WWW-Authenticate": "Bearer"}
 

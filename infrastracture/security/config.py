@@ -1,11 +1,24 @@
-from fastapi_jwt import (
-    JwtAccessBearer,
-    JwtAuthorizationCredentials
-)
 import os
 from dotenv import load_dotenv
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from ..database.postgres_repo import UserRepository
+import logging
 
 load_dotenv()
+http_bearer = HTTPBearer()
+
+user_repo = UserRepository()
+
+
+def setup_logging():
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        handlers=[
+            logging.StreamHandler()
+        ]
+    )
+
 
 JWT_SECRET = os.getenv("JWT_SECRET")
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM")

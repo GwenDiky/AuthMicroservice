@@ -14,20 +14,28 @@ from fastapi import (
     status,
     Header
 )
-from jwt import InvalidTokenError
+import jwt
 import logging
 import os
-from dotenv import load_dotenv
-from ...security.config import access_security
-from fastapi_jwt import (
-    JwtAccessBearer,
-    JwtAuthorizationCredentials
-)
+from infrastracture.security.config import http_bearer, user_repo, setup_logging
 
-load_dotenv()
-
-logging.basicConfig(level=logging.INFO)
+setup_logging()
 
 
-async def get_current_user(credentials: JwtAuthorizationCredentials = Security(access_security)):
-    return credentials.subject
+async def get_current_auth_user(token: HTTPAuthorizationCredentials = Depends(http_bearer)):
+    try:
+        token_credentials = token.credentials.replace("Bearer ", "")
+        payload = await auth_utils.decode_jwt(token_credentials)
+
+        logging.info(f"username: {payload.get('username')}"
+                     f"email: {payload.get('email')}"
+                     f"created_at: {payload.get('created_at')}"
+                     f"date_of_birth: {payload.get('date_of_birth')}"
+                     f"phone: {payload.get('phone')}"
+                     )
+
+        return await user_repo.get_user_by_username(payload.get("username"))
+    except jwt.ExpiredSignatureError:
+        raise AuthTokenExpiredException
+    except jwt.InvalidTokenError:
+        raise InvalidTokenException

@@ -7,15 +7,11 @@ from sqlalchemy.ext.asyncio import (
     AsyncSession, create_async_engine, async_sessionmaker
 )
 import os
-from dotenv import load_dotenv
 from .base import Base
 from infrastracture.database.models.user import User
 import logging
 from sqlalchemy.exc import SQLAlchemyError
 from ..exceptions import BadRequestException
-
-load_dotenv()
-
 
 class UserRepository:
     def __init__(self):
