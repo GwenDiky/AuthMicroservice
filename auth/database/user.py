@@ -5,7 +5,6 @@ from sqlalchemy import (
 )
 from datetime import datetime
 from auth.core.base import Base
-from auth.schemas.user import UserRole
 
 metadata = MetaData()
 
@@ -20,7 +19,7 @@ class User(Base):
     created_at = Column("created_at", TIMESTAMP(timezone=True), default=datetime.now)
     date_of_birth = Column("date_of_birth", TIMESTAMP(timezone=True), default=datetime.now)
     phone_number = Column("phone_number", String, nullable=True)
-    role = Column("role", Enum(UserRole), nullable=False, default=UserRole.USER)
+    role = Column("role", String, nullable=False, default="user")
     is_active = Column("is_active", Boolean, default=True)
     # role_id = Column(Integer, ForeignKey("roles.id"), nullable=True)
     # role = relationship("Role", back_populates="users")

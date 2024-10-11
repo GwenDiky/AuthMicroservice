@@ -35,11 +35,14 @@ class AbstractRepository(ABC):
     async def get_user_by_token(self):
         raise NotImplementedError
 
+    @abstractmethod
     async def get_db(self):
         raise NotImplementedError
 
 
-class UserRepository(AbstractRepository):
+class SqlAlchemyARepository(AbstractRepository):
+    model = None
+
     def __init__(self):
         self.db_url = os.getenv("SQLALCHEMY_DATABASE_URL")
         self.engine = create_async_engine(
@@ -104,14 +107,9 @@ class UserRepository(AbstractRepository):
         async with self.sessionLocalAsync() as session:
             yield session
 
-    async def test_db_connection(self):
-        ...
-        # try:
-        #     async with databases.Database(self.db) as database:
-        #         await database.connect()
-        #         print("Connection to the database established successfully.")
-        #         return True
-        # except OperationalError as e:
-        #     print("Failed to connect to the database.")
-        #     print(e)
-        #     return False
+
+class UserRepository(SqlAlchemyARepository):
+    model = User
+
+    def __init__(self):
+        super().__init__()

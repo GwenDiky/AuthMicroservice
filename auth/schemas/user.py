@@ -9,15 +9,6 @@ from uuid import UUID, uuid4
 from enum import Enum
 
 
-class UserRole(str, Enum):
-    ADMIN = "admin"
-    USER = "user"
-
-
-def get_today():
-    return date.today()
-
-
 class UserSchema(BaseModel):
     model_config = ConfigDict(
         strict=True)
@@ -25,7 +16,7 @@ class UserSchema(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     username: str
     created_at: date = Field(default_factory=date.today)
-    role: Optional[UserRole] = UserRole.USER
+    role: str = "user"
     # avatar:
     date_of_birth: Optional[date]
     phone: PhoneNumber | None = None

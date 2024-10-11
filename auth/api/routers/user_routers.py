@@ -7,6 +7,7 @@ from exceptions import (
     AuthTokenExpiredException,
     BadRequestException
 )
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 from auth.schemas.user import UserSchema, UserCreateSchema
 from auth.schemas.token import TokenSchema
@@ -19,8 +20,10 @@ from auth.database.user import User
 from sqlalchemy.orm import Session
 import bcrypt
 import logging
-from auth.core.config import user_repo, setup_logging
+from auth.core.config import setup_logging
+from auth.database.repo import UserRepository
 from auth.api.dependecies import get_current_auth_user, get_info_of_user_by_token
+from auth.core.security import hash_password
 
 setup_logging()
 
@@ -29,8 +32,8 @@ http_bearer = HTTPBearer()
 
 
 @user_router.post("/signup")
-async def signup(user: UserCreateSchema, db: Session = Depends(user_repo.get_db)):
-    hashed_password = await auth_utils.hash_password(user.password)
+async def signup(user: UserCreateSchema, db: AsyncSession = Depends(UserRepository().get_db)):
+    hashed_password = await hash_password(user.password)
 
     new_user = User(
         username=user.username,
@@ -61,10 +64,10 @@ async def validate_auth_user_login(
         username: str = Form(),
         password: str = Form(),
 ):
-    if not (await user_repo.get_user_by_username(username)):
+    if not (await UserRepository().get_user_by_username(username)):
         raise AuthFailedException
     else:
-        user = await user_repo.get_user_by_username(username)
+        user = await UserRepository().get_user_by_username(username)
 
     await compare_passwords(password, user.password)
 
@@ -77,7 +80,7 @@ async def login(
 ):
     if not user.is_active:
         raise InactiveUserException
-
+    print("user:", user)
     jwt_payload = {
         "sub": user.id,
         "id": user.id,
