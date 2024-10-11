@@ -20,9 +20,9 @@ def get_today():
 
 class UserSchema(BaseModel):
     model_config = ConfigDict(
-        strict=True)  # pydantic will not automatically convert data types for non-matching types.
+        strict=True)
 
-    id: UUID = Field(default_factory=uuid4)  # generate automatic
+    id: UUID = Field(default_factory=uuid4)
     username: str
     created_at: date = Field(default_factory=date.today)
     role: Optional[UserRole] = UserRole.USER

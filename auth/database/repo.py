@@ -11,8 +11,35 @@ from auth.database.user import User
 import logging
 from sqlalchemy.exc import SQLAlchemyError
 from exceptions import BadRequestException
+from abc import ABC, abstractmethod
 
-class UserRepository:
+
+class AbstractRepository(ABC):
+    @abstractmethod
+    async def create_user_table(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_user_by_username(self, username: str):
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_user_by_id(self, id: int):
+        raise NotImplementedError
+
+    @abstractmethod
+    async def change_password_of_current_user(self, new_password: str):
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_user_by_token(self):
+        raise NotImplementedError
+
+    async def get_db(self):
+        raise NotImplementedError
+
+
+class UserRepository(AbstractRepository):
     def __init__(self):
         self.db_url = os.getenv("SQLALCHEMY_DATABASE_URL")
         self.engine = create_async_engine(
@@ -67,7 +94,7 @@ class UserRepository:
                 logging.error(f"Database error {db_error}")
                 raise BadRequestException(f"Database error: {db_error}")
 
-    async def change_password_of_current_user(self, new_password):
+    async def change_password_of_current_user(self, new_password: str):
         ...
 
     async def get_user_by_token(self):

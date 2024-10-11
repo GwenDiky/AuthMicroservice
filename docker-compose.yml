@@ -8,7 +8,7 @@ services:
     container_name: "auth-auth"
     restart: always
     volumes:
-      - ..:/app
+      - .:/app
     ports:
       - "8083:8083"
     environment:
