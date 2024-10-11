@@ -1,17 +1,16 @@
 from sqlalchemy import (
-    create_engine, select
+    select
 )
 
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.asyncio import (
     AsyncSession, create_async_engine, async_sessionmaker
 )
 import os
-from .base import Base
-from infrastracture.database.models.user import User
+from auth.core.base import Base
+from auth.database.user import User
 import logging
 from sqlalchemy.exc import SQLAlchemyError
-from ..exceptions import BadRequestException
+from exceptions import BadRequestException
 
 class UserRepository:
     def __init__(self):

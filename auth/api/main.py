@@ -1,7 +1,7 @@
 import uvicorn
 from fastapi import FastAPI
-from infrastracture.api.user_routers import user_router
-from infrastracture.database.postgres_repo import UserRepository
+from auth.api.routers.user_routers import user_router
+from auth.database.repo import UserRepository
 import asyncio
 
 app = FastAPI()

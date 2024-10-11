@@ -1,6 +1,5 @@
-import os
 from fastapi import APIRouter, Depends, Form
-from ..exceptions import (
+from exceptions import (
     AuthFailedException,
     InactiveUserException,
     SignUpFailedException,
@@ -9,25 +8,19 @@ from ..exceptions import (
     BadRequestException
 )
 from sqlalchemy.exc import SQLAlchemyError
-from auth.domain.entities.user import UserSchema, UserCreate
-from auth.domain.entities.token import Token
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from .utils import (
+from auth.schemas.user import UserSchema, UserCreateSchema
+from auth.schemas.token import TokenSchema
+from fastapi.security import HTTPBearer
+from auth.core.utils import (
     utils_jwt as auth_utils,
     utils_users as user_utils
 )
-from pydantic_extra_types.phone_numbers import PhoneNumber
-from infrastracture.database.postgres_repo import UserRepository
-from infrastracture.database.models.user import User
-from datetime import date
-from uuid import uuid4
+from auth.database.user import User
 from sqlalchemy.orm import Session
-from auth.domain.entities.user import UserRole
 import bcrypt
-from fastapi_jwt import JwtAccessBearer, JwtAuthorizationCredentials
-import jwt
 import logging
-from ..security.config import user_repo, setup_logging
+from auth.core.config import user_repo, setup_logging
+from auth.api.dependecies import get_current_auth_user, get_info_of_user_by_token
 
 setup_logging()
 
@@ -36,7 +29,7 @@ http_bearer = HTTPBearer()
 
 
 @user_router.post("/signup")
-async def signup(user: UserCreate, db: Session = Depends(user_repo.get_db)):
+async def signup(user: UserCreateSchema, db: Session = Depends(user_repo.get_db)):
     hashed_password = await auth_utils.hash_password(user.password)
 
     new_user = User(
@@ -78,7 +71,7 @@ async def validate_auth_user_login(
     return user
 
 
-@user_router.post("/login", response_model=Token)
+@user_router.post("/login", response_model=TokenSchema)
 async def login(
         user: UserSchema = Depends(validate_auth_user_login),
 ):
@@ -95,26 +88,26 @@ async def login(
         "phone": user.phone_number if user.phone_number else None
     }
     token = await auth_utils.encode_jwt(jwt_payload)
-    return Token(
+    return TokenSchema(
         access_token=token,
         token_type="Bearer"
     )
 
 
 @user_router.get("/me")
-async def get_current_user(user: UserSchema = Depends(user_utils.get_current_auth_user)):
+async def get_current_user(user: UserSchema = Depends(get_current_auth_user)):
     return user
 
 
-@user_router.post("/refresh-token", response_model=Token)
+@user_router.post("/refresh-token", response_model=TokenSchema)
 async def refresh_token(
-        token: Token = Depends(user_utils.refresh_token_of_current_user)
+        token: TokenSchema = Depends(user_utils.refresh_token_of_current_user)
 ):
     return token
 
 
 @user_router.post("/get-info-of-user-by-token")
-async def get_info_by_token(user: UserSchema = Depends(user_utils.get_info_of_user_by_token)):
+async def get_info_by_token(user: UserSchema = Depends(get_info_of_user_by_token)):
     return user
 
 

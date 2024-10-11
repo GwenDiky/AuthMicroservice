@@ -34,7 +34,7 @@ class UserSchema(BaseModel):
     is_active: bool = True
 
 
-class UserCreate(BaseModel):
+class UserCreateSchema(BaseModel):
     username: Annotated[str, MinLen(3), MaxLen(50)]
     password: bytes
 

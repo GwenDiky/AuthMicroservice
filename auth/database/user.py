@@ -4,8 +4,8 @@ from sqlalchemy import (
     Boolean
 )
 from datetime import datetime
-from ...database.base import Base
-from auth.domain.entities.user import UserRole
+from auth.core.base import Base
+from auth.schemas.user import UserRole
 
 metadata = MetaData()
 
