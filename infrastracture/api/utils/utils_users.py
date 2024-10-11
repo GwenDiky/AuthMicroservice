@@ -9,8 +9,8 @@ from fastapi import (
 )
 from auth.domain.entities.user import UserSchema
 from auth.domain.entities.token import Token
-from . import utils_jwt as auth_utils
-from ...exceptions import InvalidTokenException
+from infrastracture.api.utils import utils_jwt as auth_utils
+from infrastracture.exceptions import InvalidTokenException
 import jwt
 import logging
 import os

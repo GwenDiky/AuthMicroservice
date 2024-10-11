@@ -5,7 +5,7 @@ from typing import Dict
 import os
 from dotenv import load_dotenv
 import bcrypt
-from ...exceptions import InvalidTokenException
+from infrastracture.exceptions import InvalidTokenException
 
 load_dotenv()
 
