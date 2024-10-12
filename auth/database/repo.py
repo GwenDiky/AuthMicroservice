@@ -45,7 +45,7 @@ class SqlAlchemyARepository(AbstractRepository):
     model = None
 
     def __init__(self):
-        self.db_url = settings.get("db_url")
+        self.db_url = settings.db.db_url
         self.engine = create_async_engine(
             self.db_url,
             echo=True

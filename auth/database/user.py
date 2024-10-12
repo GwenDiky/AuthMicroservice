@@ -5,6 +5,7 @@ from sqlalchemy import (
 )
 from datetime import datetime
 from auth.core.base import Base
+from sqlalchemy.ext.asyncio import AsyncSession
 
 metadata = MetaData()
 
@@ -24,16 +25,9 @@ class User(Base):
     # role_id = Column(Integer, ForeignKey("roles.id"), nullable=True)
     # role = relationship("Role", back_populates="users")
 
-    def to_dict(self):
-        return {
-            "username": self.username,
-            "password": self.password,
-            "email": self.email,
-            "created_at": self.created_at.isoformat(),
-            "date_of_birth": self.date_of_birth.isoformat(),
-            "phone": self.phone_number,
-            "role": self.role,
-            "is_active": self.is_active,
-        }
-
+    @classmethod
+    async def find_by_email(cls, db: AsyncSession, email: str):
+        query = select(cls).where(cls.email == email)
+        result = await db.execute(query)
+        return result.scalars().first()
 

@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from auth.api.routers.user_routers import user_router
 from auth.database.repo import UserRepository
 import asyncio
-from auth.core.settings import Settings
+from auth.core.settings import settings
 
 app = FastAPI()
 app.include_router(user_router, prefix="/api/user", tags=['authentication'])
