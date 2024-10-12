@@ -14,6 +14,18 @@ from auth.core.config import http_bearer, user_repo, setup_logging
 
 setup_logging()
 
+class PermissionChecker:
+    def __init__(self, permission: str):
+        self.permission = permission
+
+    # def __call__(self, user_id=Depends(get_user_id)):
+    #     has_permission = ...
+    #
+    #     if not has_permission:
+    #         raise HTTPException(
+    #             status_code=status.HTTP_403_FORBIDDEN,
+    #             detail='Insufficient permissions'
+    #         )
 
 async def get_current_auth_user(token: HTTPAuthorizationCredentials = Depends(http_bearer)):
     try:

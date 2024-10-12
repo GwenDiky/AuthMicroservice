@@ -11,7 +11,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 from auth.schemas.user import UserSchema, UserCreateSchema
 from auth.schemas.token import TokenSchema
-from fastapi.security import HTTPBearer
+from fastapi.security import (
+    HTTPBearer,
+    OAuth2PasswordBearer,
+    OAuth2PasswordRequestForm,
+    SecurityScopes
+)
 from auth.core.utils import (
     utils_jwt as auth_utils,
     utils_users as user_utils
@@ -24,11 +29,21 @@ from auth.core.config import setup_logging
 from auth.database.repo import UserRepository
 from auth.api.dependecies import get_current_auth_user, get_info_of_user_by_token
 from auth.core.security import hash_password
+from auth.core.settings import settings
+import jwt
+from jwt import PyJWTError
+from auth.core.utils.utils_jwt import (
+    decode_jwt,
+    encode_jwt
+)
 
 setup_logging()
 
 user_router = APIRouter()
 http_bearer = HTTPBearer()
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/user/login")
+TOKEN_TYPE = "Bearer"
 
 
 @user_router.post("/signup")
@@ -75,38 +90,68 @@ async def validate_auth_user_login(
 
 
 @user_router.post("/login", response_model=TokenSchema)
-async def login(
-        user: UserSchema = Depends(validate_auth_user_login),
-):
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = await UserRepository().get_user_by_username(form_data.username)
+    if not user:
+        raise AuthFailedException
+
+    await compare_passwords(form_data.password, user.password)
+
     if not user.is_active:
         raise InactiveUserException
-    print("user:", user)
+
     jwt_payload = {
         "sub": user.id,
-        "id": user.id,
         "username": user.username,
-        "email": user.email if user.email else None,
-        "created_at": user.created_at.isoformat() if user.created_at else None,
-        "date_of_birth": user.date_of_birth.isoformat() if user.date_of_birth else None,
-        "phone": user.phone_number if user.phone_number else None
+        "email": user.email,
     }
-    token = await auth_utils.encode_jwt(jwt_payload)
+
+    token = jwt.encode(jwt_payload, settings.jwt.jwt_secret, algorithm=settings.jwt.jwt_algorithm)
     return TokenSchema(
         access_token=token,
-        token_type="Bearer"
+        token_type=TOKEN_TYPE
     )
 
 
-@user_router.get("/me")
-async def get_current_user(user: UserSchema = Depends(get_current_auth_user)):
-    return user
+@user_router.get("/me", response_model=UserCreateSchema)
+async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserCreateSchema:
+    try:
+        payload = jwt.decode(token, settings.jwt.jwt_secret, algorithms=[settings.jwt.jwt_algorithm])
+        username = payload.get("username")
+
+        if username is None:
+            raise AuthFailedException
+
+        user = await UserRepository().get_user_by_username(username)
+
+        if not user:
+            raise AuthFailedException
+
+        return user
+
+    except PyJWTError:
+        raise AuthFailedException
 
 
 @user_router.post("/refresh-token", response_model=TokenSchema)
-async def refresh_token(
-        token: TokenSchema = Depends(user_utils.refresh_token_of_current_user)
-):
-    return token
+async def refresh_token(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token,  settings.jwt.jwt_secret, algorithms=[settings.jwt.jwt_algorithm])
+        username: str = payload.get("username")
+        if username is None:
+            raise AuthFailedException
+
+        user = await UserRepository().get_user_by_username(username)
+        if not user:
+            raise AuthFailedException
+
+        new_token = jwt.encode({"sub": user.id, "username": user.username}, settings.jwt.jwt_secret, algorithm=settings.jwt.jwt_algorithm)
+        return TokenSchema(
+            access_token=new_token,
+            token_type=TOKEN_TYPE
+        )
+    except PyJWTError:
+        raise AuthFailedException
 
 
 @user_router.post("/get-info-of-user-by-token")
@@ -126,4 +171,9 @@ async def change_password():
 
 @user_router.post("/forgot-password")
 async def forgot_password():
+    ...
+
+
+@user_router.delete("/me/delete")
+async def delete_me():
     ...

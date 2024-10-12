@@ -37,4 +37,3 @@ class User(Base):
         result = await db.execute(query)
         return result.scalars().first()
 
-

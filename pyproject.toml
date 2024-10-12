@@ -23,6 +23,7 @@ psycopg2 = "^2.9.9"
 fastapi-jwt = "^0.3.0"
 authlib = "^1.3.2"
 pydantic-settings = "^2.5.2"
+fastapi-oauth2 = "^1.3.0"
 
 [tool.poetry.group.dev.dependencies]
 httpx = "^0.27.2"
