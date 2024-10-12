@@ -18,9 +18,9 @@ async def token_response(token: str):
 
 async def encode_jwt(
         payload: dict,
-        algorithm: str = settings.get("jwt_algorithm"),
-        secret: str = settings.get("jwt_secret"),
-        expire: int = settings.get("access_token_expire_minutes"),
+        algorithm: str = settings.jwt.jwt_algorithm,
+        secret: str = settings.jwt.jwt_secret,
+        expire: int = settings.jwt.access_token_expire_minutes,
         expire_timedelta: timedelta | None = None
 ) -> Dict[str, str]:
     to_encode = payload.copy()
@@ -41,8 +41,8 @@ async def encode_jwt(
 
 async def decode_jwt(
         token: str,
-        algorithm: str = settings.get("jwt_algorithm"),
-        secret: str = settings.get("jwt_secret"),
+        algorithm: str = settings.jwt.jwt_algorithm,
+        secret: str = settings.jwt.jwt_secret,
 ) -> dict:
     try:
         decoded_token = jwt.decode(token, secret, algorithms=[algorithm])
