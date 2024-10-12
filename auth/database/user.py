@@ -31,3 +31,10 @@ class User(Base):
         result = await db.execute(query)
         return result.scalars().first()
 
+    @classmethod
+    async def find_by_username(cls, db: AsyncSession, username: str):
+        query = select(cls).where(cls.username == username)
+        result = await db.execute(query)
+        return result.scalars().first()
+
+
