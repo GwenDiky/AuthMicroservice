@@ -12,6 +12,7 @@ import logging
 from sqlalchemy.exc import SQLAlchemyError
 from exceptions import BadRequestException
 from abc import ABC, abstractmethod
+from auth.core.settings import settings
 
 
 class AbstractRepository(ABC):
@@ -44,7 +45,7 @@ class SqlAlchemyARepository(AbstractRepository):
     model = None
 
     def __init__(self):
-        self.db_url = os.getenv("SQLALCHEMY_DATABASE_URL")
+        self.db_url = settings.get("db_url")
         self.engine = create_async_engine(
             self.db_url,
             echo=True

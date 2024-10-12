@@ -6,6 +6,7 @@ import os
 from dotenv import load_dotenv
 import bcrypt
 from exceptions import InvalidTokenException
+from auth.core.settings import settings
 
 load_dotenv()
 
@@ -15,12 +16,11 @@ async def token_response(token: str):
         "access_token": token
     }
 
-
 async def encode_jwt(
         payload: dict,
-        algorithm: str = os.getenv("JWT_ALGORITHM"),
-        secret: str = os.getenv("JWT_SECRET"),
-        expire: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")),
+        algorithm: str = settings.get("jwt_algorithm"),
+        secret: str = settings.get("jwt_secret"),
+        expire: int = settings.get("access_token_expire_minutes"),
         expire_timedelta: timedelta | None = None
 ) -> Dict[str, str]:
     to_encode = payload.copy()
@@ -41,8 +41,8 @@ async def encode_jwt(
 
 async def decode_jwt(
         token: str,
-        algorithm: str = os.getenv("JWT_ALGORITHM"),
-        secret: str = os.getenv("JWT_SECRET"),
+        algorithm: str = settings.get("jwt_algorithm"),
+        secret: str = settings.get("jwt_secret"),
 ) -> dict:
     try:
         decoded_token = jwt.decode(token, secret, algorithms=[algorithm])
