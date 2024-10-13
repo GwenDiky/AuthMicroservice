@@ -16,7 +16,7 @@ class User(Base):
     id = Column("id", Integer, primary_key=True, autoincrement=True)
     username = Column("username", String(50), nullable=False)
     password = Column("password", String)
-    email = Column("email", String, nullable=True)
+    email = Column("email", String, nullable=False)
     created_at = Column("created_at", TIMESTAMP(timezone=True), default=datetime.now)
     date_of_birth = Column("date_of_birth", TIMESTAMP(timezone=True), default=datetime.now)
     phone_number = Column("phone_number", String, nullable=True)

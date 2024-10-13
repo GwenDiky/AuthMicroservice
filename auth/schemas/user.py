@@ -19,8 +19,8 @@ class UserSchema(BaseModel):
     role: str = "user"
     # avatar:
     date_of_birth: Optional[date]
-    phone: PhoneNumber | None = None
-    email: EmailStr | None = None
+    phone_number: Optional[PhoneNumber] = None
+    email: EmailStr
     password: bytes
     is_active: bool = True
 
@@ -29,8 +29,8 @@ class UserCreateSchema(BaseModel):
     username: Annotated[str, MinLen(3), MaxLen(50)]
     password: bytes
 
-    phone: Optional[PhoneNumber] = None
-    email: Optional[EmailStr] = None
+    phone_number: Optional[PhoneNumber] = None
+    email: Optional[EmailStr]
 
     is_active: bool = True
     date_of_birth: Optional[date] = None

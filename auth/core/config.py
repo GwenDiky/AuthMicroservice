@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from auth.database.repo import UserRepository
+from auth.database.user_repo import UserRepository
 import logging
 
 load_dotenv()

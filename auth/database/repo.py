@@ -107,10 +107,3 @@ class SqlAlchemyARepository(AbstractRepository):
     async def get_db(self) -> AsyncSession:
         async with self.sessionLocalAsync() as session:
             yield session
-
-
-class UserRepository(SqlAlchemyARepository):
-    model = User
-
-    def __init__(self):
-        super().__init__()

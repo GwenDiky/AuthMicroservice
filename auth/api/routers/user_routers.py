@@ -26,7 +26,7 @@ from sqlalchemy.orm import Session
 import bcrypt
 import logging
 from auth.core.config import setup_logging
-from auth.database.repo import UserRepository
+from auth.database.user_repo import UserRepository
 from auth.api.dependecies import get_current_auth_user, get_info_of_user_by_token
 from auth.core.security import hash_password
 from auth.core.settings import settings
@@ -50,14 +50,10 @@ TOKEN_TYPE = "Bearer"
 async def signup(user: UserCreateSchema, db: AsyncSession = Depends(UserRepository().get_db)):
     hashed_password = await hash_password(user.password)
 
-    new_user = User(
-        username=user.username,
-        password=str(hashed_password),
-        is_active=True,
-        email=user.email,
-        phone_number=user.phone,
-        date_of_birth=user.date_of_birth,
-    )
+    user_data = user.model_dump()
+    user_data['password'] = hashed_password
+
+    new_user = User(**user_data)
     db.add(new_user)
     try:
         await db.commit()
