@@ -4,6 +4,13 @@ from typing import Any
 
 headers = {"WWW-Authenticate": "Bearer"}
 
+class UserNotFound(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User wasn't found. Check up your credentials",
+            headers=headers
+        )
 
 class AuthFailedException(HTTPException):
     def __init__(self) -> None:

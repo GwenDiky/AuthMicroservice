@@ -10,7 +10,7 @@ from auth.core.base import Base
 from auth.database.user import User
 import logging
 from sqlalchemy.exc import SQLAlchemyError
-from exceptions import BadRequestException
+from exceptions import BadRequestException, UserNotFound
 from abc import ABC, abstractmethod
 from auth.core.settings import settings
 
@@ -69,7 +69,7 @@ class SqlAlchemyARepository(AbstractRepository):
                 result = await session.execute(query)
                 user = result.scalar_one_or_none()
                 if not user:
-                    return "user wasn't found. check up your statement again"
+                    raise UserNotFound
                 logging.info(f"data of {user.username}:\n "
                              f"email: {user.email}\n "
                              f"birthday: {user.date_of_birth}\n"
@@ -87,7 +87,7 @@ class SqlAlchemyARepository(AbstractRepository):
                 result = await session.execute(query)
                 user = result.scalar_one_or_none()
                 if not user:
-                    return "user wasn't found. check up your statement again"
+                    raise UserNotFound
                 logging.info(f"data of {username}:\n "
                              f"email: {user.email}\n "
                              f"birthday: {user.date_of_birth}\n"

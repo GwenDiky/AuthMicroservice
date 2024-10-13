@@ -22,7 +22,6 @@ class UserSchema(BaseModel):
     phone_number: Optional[PhoneNumber] = None
     email: EmailStr
     password: str
-    is_active: bool = True
 
 
 class UserCreateSchema(BaseModel):
@@ -32,5 +31,4 @@ class UserCreateSchema(BaseModel):
     phone_number: Optional[PhoneNumber] = None
     email: Optional[EmailStr]
 
-    is_active: bool = True
     date_of_birth: Optional[date] = None
