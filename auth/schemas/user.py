@@ -21,13 +21,13 @@ class UserSchema(BaseModel):
     date_of_birth: Optional[date]
     phone_number: Optional[PhoneNumber] = None
     email: EmailStr
-    password: bytes
+    password: str
     is_active: bool = True
 
 
 class UserCreateSchema(BaseModel):
     username: Annotated[str, MinLen(3), MaxLen(50)]
-    password: bytes
+    password: str
 
     phone_number: Optional[PhoneNumber] = None
     email: Optional[EmailStr]

@@ -11,11 +11,8 @@ load_dotenv()
 
 
 async def hash_password(
-        password: str | bytes,
+        password: str,
 ) -> str:
-    if isinstance(password, bytes):
-        password = password.decode('utf-8')
-
     salt = bcrypt.gensalt()
     pwd_bytes: bytes = password.encode()
 
@@ -25,7 +22,7 @@ async def hash_password(
 
 async def validate_password(
         password: str,
-        hashed_password: bytes
+        hashed_password: str
 ) -> bool:
     return bcrypt.checkpw(
         password=password.encode(),
