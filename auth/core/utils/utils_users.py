@@ -7,7 +7,10 @@ from fastapi import (
 from auth.schemas.user import UserSchema
 from auth.schemas.token import TokenSchema
 from auth.core.utils import utils_jwt as auth_utils
-from exceptions import InvalidTokenException
+from exceptions import (
+    InvalidTokenException,
+    AuthFailedException
+)
 import jwt
 import logging
 from auth.core.config import http_bearer, setup_logging

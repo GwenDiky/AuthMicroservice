@@ -33,7 +33,7 @@ class AbstractRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def change_password_of_current_user(self, new_password: str):
+    async def change_password_of_current_user(self, user: User, hashed_password: str):
         raise NotImplementedError
 
     @abstractmethod
@@ -63,7 +63,7 @@ class SqlAlchemyARepository(AbstractRepository):
         )
 
     async def add_new_user(self, user: User):
-        async with self.sessionLocalAsync(expire_on_commit=False) as session:
+        async with self.sessionLocalAsync() as session:
             try:
                 await session.add(user)
                 await session.commit()
@@ -72,7 +72,7 @@ class SqlAlchemyARepository(AbstractRepository):
                 await session.rollback()
                 logging.error(f"Error occurred: {db_error}")
                 raise SignUpFailedException
-            return {"message": "User created", "user": new_user}
+            return {"message": "User created", "user": user}
 
     async def create_user_table(self):
         async with self.engine.begin() as conn:
@@ -103,20 +103,28 @@ class SqlAlchemyARepository(AbstractRepository):
                 user = result.scalar_one_or_none()
                 if not user:
                     raise UserNotFound
-                logging.info(f"data of {username}:\n "
+                logging.info(f"data of {user.username}:\n "
                              f"email: {user.email}\n "
                              f"birthday: {user.date_of_birth}\n"
-                             f"phone: {user.phone_number}\n "
-                             f"valid: {user.is_active}\n")
+                             f"phone: {user.phone_number}")
                 return user
             except SQLAlchemyError as db_error:
                 logging.error(f"Database error {db_error}")
                 raise BadRequestException(f"Database error: {db_error}")
 
-    async def change_password_of_current_user(self, new_password: str):
-        # async with self.sessionLocalAsync(expire_on_commit=False) as session:
-        #     try:
-        ...
+    async def change_password_of_current_user(self, id: int, hashed_password: str):
+        async with self.sessionLocalAsync() as session:
+            try:
+                user = await self.get_user_by_id(id)
+                user.password = hashed_password
+                session.add(user)
+                await session.commit()
+                await session.refresh(user)
+            except SQLAlchemyError as db_error:
+                await session.rollback()
+                logging.error(f"Error occurred: {db_error}")
+                raise BadRequestException(f"Database error: {db_error}")
+            return user
 
     async def get_user_by_token(self):
         ...

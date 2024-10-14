@@ -98,7 +98,7 @@ async def refresh_token(token: str = Depends(oauth2_scheme)) -> TokenSchema:
             access_token=new_token,
             token_type=TOKEN_TYPE
         )
-    except PyJWTError:
+    except PyJWTError as e:
         raise AuthFailedException
 
 
@@ -113,8 +113,21 @@ async def logout():
 
 
 @user_router.put("/change-password")
-async def change_password():
-    ...
+async def change_password(new_password: str, token: str = Depends(oauth2_scheme)):
+    payload = await decode_jwt(token)
+    user = await get_current_auth_user(payload)
+    hashed_password = await hash_password(new_password)
+
+    try:
+        result = await UserRepository().change_password_of_current_user(user.id, hashed_password)
+        return result
+    except PyJWTError:
+        raise AuthFailedException
+    except Exception as e:
+        logging.error(f"Error during password change: {e}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
 
 
 @user_router.post("/forgot-password")
