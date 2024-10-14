@@ -11,6 +11,8 @@ from auth.core.utils import utils_jwt as auth_utils
 from auth.schemas.token import TokenSchema
 from auth.schemas.user import UserSchema
 from exceptions import InvalidTokenException
+from jwt import PyJWTError
+from auth.database.user_repo import UserRepository
 
 setup_logging()
 
@@ -27,23 +29,22 @@ class PermissionChecker:
     #             detail='Insufficient permissions'
     #         )
 
-async def get_current_auth_user(token: HTTPAuthorizationCredentials = Depends(http_bearer)):
+
+async def get_current_auth_user(payload):
     try:
-        token_credentials = token.credentials.replace("Bearer ", "")
-        payload = await auth_utils.decode_jwt(token_credentials)
+        username = payload.get("username")
 
-        logging.info(f"username: {payload.get('username')}"
-                     f"email: {payload.get('email')}"
-                     f"created_at: {payload.get('created_at')}"
-                     f"date_of_birth: {payload.get('date_of_birth')}"
-                     f"phone: {payload.get('phone')}"
-                     )
+        if username is None:
+            raise AuthFailedException
 
-        return await user_repo.get_user_by_username(payload.get("username"))
-    except jwt.ExpiredSignatureError:
-        raise AuthTokenExpiredException
-    except jwt.InvalidTokenError:
-        raise InvalidTokenException
+        user = await UserRepository().get_user_by_username(username)
+
+        if not user:
+            raise AuthFailedException
+
+        return user
+    except PyJWTError:
+        raise AuthFailedException
 
 
 async def get_info_of_user_by_token(token: TokenSchema) -> UserSchema:

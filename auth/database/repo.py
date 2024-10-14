@@ -114,6 +114,8 @@ class SqlAlchemyARepository(AbstractRepository):
                 raise BadRequestException(f"Database error: {db_error}")
 
     async def change_password_of_current_user(self, new_password: str):
+        # async with self.sessionLocalAsync(expire_on_commit=False) as session:
+        #     try:
         ...
 
     async def get_user_by_token(self):

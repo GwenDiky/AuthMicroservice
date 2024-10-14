@@ -27,6 +27,7 @@ from auth.core.utils.utils_jwt import (
     decode_jwt,
     encode_jwt
 )
+from auth.api.dependecies import get_current_auth_user
 
 setup_logging()
 
@@ -80,33 +81,17 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserCreateSchema:
     try:
         payload = await decode_jwt(token)
-        username = payload.get("username")
-
-        if username is None:
-            raise AuthFailedException
-
-        user = await UserRepository().get_user_by_username(username)
-
-        if not user:
-            raise AuthFailedException
-
+        user = await get_current_auth_user(payload)
         return user
-
     except PyJWTError:
         raise AuthFailedException
 
 
 @user_router.post("/refresh-token", response_model=TokenSchema)
-async def refresh_token(token: str = Depends(oauth2_scheme)):
+async def refresh_token(token: str = Depends(oauth2_scheme)) -> TokenSchema:
     try:
-        payload = jwt.decode(token,  settings.jwt.jwt_secret, algorithms=[settings.jwt.jwt_algorithm])
-        username: str = payload.get("username")
-        if username is None:
-            raise AuthFailedException
-
-        user = await UserRepository().get_user_by_username(username)
-        if not user:
-            raise AuthFailedException
+        payload = await decode_jwt(token)
+        user = await get_current_auth_user(payload)
 
         new_token = jwt.encode({"sub": user.id, "username": user.username}, settings.jwt.jwt_secret, algorithm=settings.jwt.jwt_algorithm)
         return TokenSchema(
