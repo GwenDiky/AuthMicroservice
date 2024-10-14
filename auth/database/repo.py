@@ -3,7 +3,10 @@ from sqlalchemy import (
 )
 
 from sqlalchemy.ext.asyncio import (
-    AsyncSession, create_async_engine, async_sessionmaker
+    AsyncSession,
+    create_async_engine,
+    async_sessionmaker,
+    engine
 )
 import os
 from auth.core.base import Base
@@ -44,14 +47,10 @@ class AbstractRepository(ABC):
 class SqlAlchemyARepository(AbstractRepository):
     model = None
 
-    def __init__(self):
+    def __init__(self, async_engine: engine):
         self.db_url = settings.db.db_url
-        self.engine = create_async_engine(
-            self.db_url,
-            echo=True
-        )
         self.sessionLocalAsync = async_sessionmaker(
-            bind=self.engine,
+            bind=async_engine,
             autoflush=False,
             autocommit=False,
             class_=AsyncSession,

@@ -19,13 +19,15 @@ from auth.core.utils.utils_jwt import (
 )
 from auth.core.utils.utils_users import compare_passwords
 from auth.database.user import User
-from auth.database.user_repo import UserRepository
+from auth.database.user_repo import UserRepository, get_user_repo
 from auth.schemas.token import TokenSchema
 from auth.schemas.user import UserSchema, UserCreateSchema, UserSignUpSchema
 from exceptions import (
     AuthFailedException,
     SignUpFailedException
 )
+from sqlalchemy.ext.asyncio import create_async_engine
+from auth.core.settings import settings
 
 setup_logging()
 
@@ -34,10 +36,9 @@ user_router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/user/login")
 TOKEN_TYPE = "Bearer"
 
-
 @user_router.post("/signup")
-async def signup(user: UserCreateSchema) \
-        -> UserSignUpSchema:
+async def signup(user: UserCreateSchema,
+                 user_repo: UserRepository = Depends(get_user_repo)):
     hashed_password = await hash_password(user.password)
 
     user_data = user.model_dump()
@@ -45,7 +46,7 @@ async def signup(user: UserCreateSchema) \
 
     new_user = User(**user_data)
     try:
-        result = await UserRepository().add_new_user(new_user)
+        result = await user_repo.add_new_user(new_user)
     except SignUpFailedException:
         logging.error("User creation failed")
         raise SignUpFailedException
@@ -54,9 +55,10 @@ async def signup(user: UserCreateSchema) \
 
 
 @user_router.post("/login", response_model=TokenSchema)
-async def login(form_data: OAuth2PasswordRequestForm = Depends()) \
+async def login(form_data: OAuth2PasswordRequestForm = Depends(),
+                user_repo: UserRepository = Depends(get_user_repo)) \
         -> TokenSchema:
-    user = await UserRepository().get_user_by_username(form_data.username)
+    user = await user_repo.get_user_by_username(form_data.username)
     if not user:
         raise AuthFailedException
 
@@ -114,13 +116,14 @@ async def logout():
 
 
 @user_router.put("/change-password")
-async def change_password(new_password: str, token: str = Depends(oauth2_scheme)):
+async def change_password(new_password: str, token: str = Depends(oauth2_scheme),
+                          user_repo: UserRepository = Depends(get_user_repo)):
     payload = await decode_jwt(token)
     user = await get_current_auth_user(payload)
     hashed_password = await hash_password(new_password)
 
     try:
-        result = await UserRepository().change_password_of_current_user(user.id, hashed_password)
+        result = await user_repo.change_password_of_current_user(user.id, hashed_password)
         return result
 
     except PyJWTError:
@@ -136,13 +139,14 @@ async def forgot_password():
 
 
 @user_router.delete("/me/delete")
-async def delete_me(token: str = Depends(oauth2_scheme)) -> (
+async def delete_me(token: str = Depends(oauth2_scheme),
+                    user_repo: UserRepository = Depends(get_user_repo)) -> (
         dict):
     payload = await decode_jwt(token)
     user = await get_current_auth_user(payload)
 
     try:
-        result = await UserRepository().delete_user(user.id)
+        result = await user_repo.delete_user(user.id)
         return result
     except PyJWTError:
         raise AuthFailedException
