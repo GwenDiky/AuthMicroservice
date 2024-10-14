@@ -34,7 +34,7 @@ class UserCreateSchema(BaseModel):
     date_of_birth: Optional[date] = None
 
 
-class UserSignUpSchema(BaseModel):
+class UserInDBSchema(BaseModel):
     id: UUID
     username: Annotated[str, MinLen(3), MaxLen(50)]
     password: str

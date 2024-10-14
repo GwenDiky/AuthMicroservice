@@ -21,13 +21,14 @@ from auth.core.utils.utils_users import compare_passwords
 from auth.database.user import User
 from auth.database.user_repo import UserRepository, get_user_repo
 from auth.schemas.token import TokenSchema
-from auth.schemas.user import UserSchema, UserCreateSchema, UserSignUpSchema
+from auth.schemas.user import UserSchema, UserCreateSchema, UserInDBSchema
 from exceptions import (
     AuthFailedException,
     SignUpFailedException
 )
 from sqlalchemy.ext.asyncio import create_async_engine
 from auth.core.settings import settings
+
 
 setup_logging()
 
@@ -38,7 +39,8 @@ TOKEN_TYPE = "Bearer"
 
 @user_router.post("/signup")
 async def signup(user: UserCreateSchema,
-                 user_repo: UserRepository = Depends(get_user_repo)):
+                 user_repo: UserRepository = Depends(get_user_repo))\
+        -> UserInDBSchema:
     hashed_password = await hash_password(user.password)
 
     user_data = user.model_dump()
