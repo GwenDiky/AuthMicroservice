@@ -10,7 +10,7 @@ from auth.core.utils import utils_jwt as auth_utils
 from exceptions import InvalidTokenException
 import jwt
 import logging
-from auth.core.config import http_bearer, user_repo, setup_logging
+from auth.core.config import http_bearer, setup_logging
 
 setup_logging()
 

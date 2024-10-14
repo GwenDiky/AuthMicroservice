@@ -54,21 +54,14 @@ async def signup(user: UserCreateSchema, db: AsyncSession = Depends(UserReposito
     user_data['password'] = hashed_password
 
     new_user = User(**user_data)
-    db.add(new_user)
+    user_repository = UserRepository(db)
     try:
-        await db.commit()
-        await db.refresh(new_user)
-    except SQLAlchemyError as db_error:
-        await db.rollback()
-        logging.error(f"Error occurred: {db_error}")
+        result = await user_repository.add_new_user(new_user)
+    except SignUpFailedException:
+        logging.error("User creation failed")
         raise SignUpFailedException
-    return {"message": "User created", "user": new_user}
 
-
-async def compare_passwords(password, hashed_password):
-    if not bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8')):
-        raise AuthFailedException
-    return True
+    return result
 
 
 async def validate_auth_user_login(

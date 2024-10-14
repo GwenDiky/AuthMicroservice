@@ -21,6 +21,10 @@ class AbstractRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def add_new_user(self, user: User):
+        raise NotImplementedError
+
+    @abstractmethod
     async def get_user_by_username(self, username: str):
         raise NotImplementedError
 
@@ -57,6 +61,18 @@ class SqlAlchemyARepository(AbstractRepository):
             class_=AsyncSession,
             expire_on_commit=False
         )
+
+    async def add_new_user(self, user: User):
+        async with self.sessionLocalAsync(expire_on_commit=False) as session:
+            try:
+                await session.add(user)
+                await session.commit()
+                await session.refresh(user)
+            except SQLAlchemyError as db_error:
+                await session.rollback()
+                logging.error(f"Error occurred: {db_error}")
+                raise SignUpFailedException
+            return {"message": "User created", "user": new_user}
 
     async def create_user_table(self):
         async with self.engine.begin() as conn:

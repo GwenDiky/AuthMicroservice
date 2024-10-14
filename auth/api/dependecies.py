@@ -58,3 +58,9 @@ async def get_info_of_user_by_token(token: TokenSchema) -> UserSchema:
 
     return user
 
+
+async def compare_passwords(password, hashed_password):
+    if not bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8')):
+        raise AuthFailedException
+    return True
+
