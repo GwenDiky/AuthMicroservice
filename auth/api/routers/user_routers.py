@@ -136,5 +136,12 @@ async def forgot_password():
 
 
 @user_router.delete("/me/delete")
-async def delete_me():
-    ...
+async def delete_me(token: str = Depends(oauth2_scheme)):
+    payload = await decode_jwt(token)
+    user = await get_current_auth_user(payload)
+
+    try:
+        result = await UserRepository().delete_user(user.id)
+        return result
+    except PyJWTError:
+        raise AuthFailedException

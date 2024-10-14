@@ -132,3 +132,17 @@ class SqlAlchemyARepository(AbstractRepository):
     async def get_db(self) -> AsyncSession:
         async with self.sessionLocalAsync() as session:
             yield session
+
+    async def delete_user(self, id: int):
+        async with self.sessionLocalAsync() as session:
+            try:
+                query = select(User).where(User.id == id)
+                obj = await session.execute(query)
+                user = obj.scalar_one_or_none()
+                await session.delete(user)
+                await session.commit()
+            except SQLAlchemyError as db_error:
+                await session.rollback()
+                logging.error(f"Error occurred: {db_error}")
+                raise BadRequestException(f"Database error: {db_error}")
+            return {"result": "user was deleted"}
