@@ -23,6 +23,10 @@ from exceptions import (
     AuthFailedException,
     SignUpFailedException
 )
+from auth.core.utils.utils_jwt import (
+    decode_jwt,
+    encode_jwt
+)
 
 setup_logging()
 
@@ -65,7 +69,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
         "email": user.email,
     }
 
-    token = jwt.encode(jwt_payload, settings.jwt.jwt_secret, algorithm=settings.jwt.jwt_algorithm)
+    token = await encode_jwt(jwt_payload)
     return TokenSchema(
         access_token=token,
         token_type=TOKEN_TYPE
@@ -75,7 +79,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 @user_router.get("/me", response_model=UserCreateSchema)
 async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserCreateSchema:
     try:
-        payload = jwt.decode(token, settings.jwt.jwt_secret, algorithms=[settings.jwt.jwt_algorithm])
+        payload = await decode_jwt(token)
         username = payload.get("username")
 
         if username is None:
