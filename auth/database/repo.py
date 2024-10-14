@@ -37,10 +37,6 @@ class AbstractRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_user_by_token(self):
-        raise NotImplementedError
-
-    @abstractmethod
     async def get_db(self):
         raise NotImplementedError
 
@@ -65,14 +61,14 @@ class SqlAlchemyARepository(AbstractRepository):
     async def add_new_user(self, user: User):
         async with self.sessionLocalAsync() as session:
             try:
-                await session.add(user)
+                session.add(user)
                 await session.commit()
                 await session.refresh(user)
             except SQLAlchemyError as db_error:
                 await session.rollback()
                 logging.error(f"Error occurred: {db_error}")
                 raise SignUpFailedException
-            return {"message": "User created", "user": user}
+            return user
 
     async def create_user_table(self):
         async with self.engine.begin() as conn:
@@ -126,8 +122,6 @@ class SqlAlchemyARepository(AbstractRepository):
                 raise BadRequestException(f"Database error: {db_error}")
             return user
 
-    async def get_user_by_token(self):
-        ...
 
     async def get_db(self) -> AsyncSession:
         async with self.sessionLocalAsync() as session:

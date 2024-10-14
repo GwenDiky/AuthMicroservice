@@ -32,3 +32,14 @@ class UserCreateSchema(BaseModel):
     email: Optional[EmailStr]
 
     date_of_birth: Optional[date] = None
+
+
+class UserSignUpSchema(BaseModel):
+    id: UUID
+    username: Annotated[str, MinLen(3), MaxLen(50)]
+    password: str
+    email: Optional[EmailStr]
+    created_at: date
+    date_of_birth: date
+    phone_number: Optional[PhoneNumber]
+    role: str

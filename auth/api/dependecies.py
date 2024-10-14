@@ -6,7 +6,7 @@ from fastapi.security import (
     HTTPAuthorizationCredentials,
 )
 
-from auth.core.config import http_bearer, user_repo, setup_logging
+from auth.core.config import setup_logging
 from auth.core.utils import utils_jwt as auth_utils
 from auth.schemas.token import TokenSchema
 from auth.schemas.user import UserSchema
@@ -30,7 +30,8 @@ class PermissionChecker:
     #         )
 
 
-async def get_current_auth_user(payload):
+async def get_current_auth_user(payload)\
+        -> UserSchema:
     try:
         username = payload.get("username")
 
@@ -47,12 +48,13 @@ async def get_current_auth_user(payload):
         raise AuthFailedException
 
 
-async def get_info_of_user_by_token(token: TokenSchema) -> UserSchema:
+async def get_info_of_user_by_token(token: TokenSchema) \
+        -> UserSchema:
     token_credentials = token.access_token
     payload = await auth_utils.decode_jwt(token_credentials)
 
     username = payload.get("username")
-    user = await user_repo.get_user_by_username(username)
+    user = await UserRepository().get_user_by_username(username)
 
     if not user:
         raise InvalidTokenException
@@ -63,7 +65,7 @@ async def get_info_of_user_by_token(token: TokenSchema) -> UserSchema:
 async def validate_auth_user_login(
         username: str = Form(),
         password: str = Form(),
-):
+) -> UserSchema:
     if not (await UserRepository().get_user_by_username(username)):
         raise AuthFailedException
     else:

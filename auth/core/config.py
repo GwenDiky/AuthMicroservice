@@ -7,8 +7,6 @@ import logging
 load_dotenv()
 http_bearer = HTTPBearer()
 
-user_repo = UserRepository()
-
 
 def setup_logging():
     logging.basicConfig(
