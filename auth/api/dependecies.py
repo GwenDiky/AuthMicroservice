@@ -1,16 +1,16 @@
+import logging
+
+import jwt
+from fastapi import Depends, Form
 from fastapi.security import (
     HTTPAuthorizationCredentials,
 )
-from fastapi import (
-    Depends
-)
-from auth.schemas.user import UserSchema
-from auth.schemas.token import TokenSchema
-from exceptions import InvalidTokenException
-from auth.core.utils import utils_jwt as auth_utils
-import jwt
-import logging
+
 from auth.core.config import http_bearer, user_repo, setup_logging
+from auth.core.utils import utils_jwt as auth_utils
+from auth.schemas.token import TokenSchema
+from auth.schemas.user import UserSchema
+from exceptions import InvalidTokenException
 
 setup_logging()
 
@@ -59,8 +59,15 @@ async def get_info_of_user_by_token(token: TokenSchema) -> UserSchema:
     return user
 
 
-async def compare_passwords(password, hashed_password):
-    if not bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8')):
+async def validate_auth_user_login(
+        username: str = Form(),
+        password: str = Form(),
+):
+    if not (await UserRepository().get_user_by_username(username)):
         raise AuthFailedException
-    return True
+    else:
+        user = await UserRepository().get_user_by_username(username)
 
+    await compare_passwords(password, user.password)
+
+    return user

@@ -11,6 +11,7 @@ from exceptions import InvalidTokenException
 import jwt
 import logging
 from auth.core.config import http_bearer, setup_logging
+import bcrypt
 
 setup_logging()
 
@@ -36,3 +37,9 @@ async def refresh_token_of_current_user(token: HTTPAuthorizationCredentials = De
         raise AuthTokenExpiredException
     except jwt.InvalidTokenError:
         raise InvalidTokenException
+
+
+async def compare_passwords(password, hashed_password):
+    if not bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8')):
+        raise AuthFailedException
+    return True

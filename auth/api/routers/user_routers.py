@@ -1,40 +1,27 @@
-from fastapi import APIRouter, Depends, Form
-from exceptions import (
-    AuthFailedException,
-    InactiveUserException,
-    SignUpFailedException,
-    InvalidTokenException,
-    AuthTokenExpiredException,
-    BadRequestException
-)
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.exc import SQLAlchemyError
-from auth.schemas.user import UserSchema, UserCreateSchema
-from auth.schemas.token import TokenSchema
+import logging
+
+import jwt
+from fastapi import APIRouter, Depends
 from fastapi.security import (
     HTTPBearer,
     OAuth2PasswordBearer,
-    OAuth2PasswordRequestForm,
-    SecurityScopes
+    OAuth2PasswordRequestForm
 )
-from auth.core.utils import (
-    utils_jwt as auth_utils,
-    utils_users as user_utils
-)
-from auth.database.user import User
-from sqlalchemy.orm import Session
-import bcrypt
-import logging
+from jwt import PyJWTError
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from auth.api.dependecies import get_info_of_user_by_token
 from auth.core.config import setup_logging
-from auth.database.user_repo import UserRepository
-from auth.api.dependecies import get_current_auth_user, get_info_of_user_by_token
 from auth.core.security import hash_password
 from auth.core.settings import settings
-import jwt
-from jwt import PyJWTError
-from auth.core.utils.utils_jwt import (
-    decode_jwt,
-    encode_jwt
+from auth.core.utils.utils_users import compare_passwords
+from auth.database.user import User
+from auth.database.user_repo import UserRepository
+from auth.schemas.token import TokenSchema
+from auth.schemas.user import UserSchema, UserCreateSchema
+from exceptions import (
+    AuthFailedException,
+    SignUpFailedException
 )
 
 setup_logging()
@@ -64,20 +51,6 @@ async def signup(user: UserCreateSchema, db: AsyncSession = Depends(UserReposito
     return result
 
 
-async def validate_auth_user_login(
-        username: str = Form(),
-        password: str = Form(),
-):
-    if not (await UserRepository().get_user_by_username(username)):
-        raise AuthFailedException
-    else:
-        user = await UserRepository().get_user_by_username(username)
-
-    await compare_passwords(password, user.password)
-
-    return user
-
-
 @user_router.post("/login", response_model=TokenSchema)
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     user = await UserRepository().get_user_by_username(form_data.username)
@@ -85,9 +58,6 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
         raise AuthFailedException
 
     await compare_passwords(form_data.password, user.password)
-
-    if not user.is_active:
-        raise InactiveUserException
 
     jwt_payload = {
         "sub": user.id,

@@ -89,8 +89,7 @@ class SqlAlchemyARepository(AbstractRepository):
                 logging.info(f"data of {user.username}:\n "
                              f"email: {user.email}\n "
                              f"birthday: {user.date_of_birth}\n"
-                             f"phone: {user.phone_number}\n "
-                             f"valid: {user.is_active}\n")
+                             f"phone: {user.phone_number}")
                 return user
             except SQLAlchemyError as db_error:
                 logging.error(f"Database error {db_error}")
