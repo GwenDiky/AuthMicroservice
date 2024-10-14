@@ -15,7 +15,7 @@ from auth.core.security import hash_password
 from auth.core.settings import settings
 from auth.core.utils.utils_jwt import (
     decode_jwt,
-    encode_jwt
+    encode_jwt, token_response
 )
 from auth.core.utils.utils_users import compare_passwords
 from auth.database.user import User
@@ -104,6 +104,13 @@ async def refresh_token(token: str = Depends(oauth2_scheme)) \
     except PyJWTError:
         raise AuthFailedException
 
+@user_router.get('/get-token-of-current-user')
+async def get_token(token: str = Depends(oauth2_scheme)) \
+        -> TokenSchema:
+    return TokenSchema(
+        access_token = token,
+        token_type = "Bearer"
+    )
 
 @user_router.post("/get-info-of-user-by-token")
 async def get_info_by_token(user: UserSchema = Depends(get_info_of_user_by_token)) -> UserSchema:
