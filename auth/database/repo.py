@@ -4,16 +4,14 @@ from sqlalchemy import (
 
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
-    create_async_engine,
     async_sessionmaker,
     engine
 )
-import os
 from auth.core.base import Base
 from auth.database.user import User
 import logging
 from sqlalchemy.exc import SQLAlchemyError
-from exceptions import BadRequestException, UserNotFoundException
+from auth.exceptions import BadRequestException, UserNotFoundException
 from abc import ABC, abstractmethod
 from auth.core.settings import settings
 

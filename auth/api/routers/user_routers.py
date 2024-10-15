@@ -12,7 +12,6 @@ from auth.api.dependecies import get_current_auth_user
 from auth.api.dependecies import get_info_of_user_by_token
 from auth.core.config import setup_logging
 from auth.core.security import hash_password
-from auth.core.settings import settings
 from auth.core.utils.utils_jwt import (
     decode_jwt,
     encode_jwt
@@ -22,12 +21,11 @@ from auth.database.user import User
 from auth.database.user_repo import UserRepository, get_user_repo
 from auth.schemas.token import TokenSchema
 from auth.schemas.user import UserSchema, UserCreateSchema, UserInDBSchema
-from exceptions import (
+from auth.exceptions import (
     AuthFailedException,
     SignUpFailedException,
     PasswordNotChangedException
 )
-from sqlalchemy.ext.asyncio import create_async_engine
 from auth.core.settings import settings
 
 

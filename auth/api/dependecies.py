@@ -1,16 +1,10 @@
-import logging
-
-import jwt
-from fastapi import Depends, Form
-from fastapi.security import (
-    HTTPAuthorizationCredentials,
-)
+from fastapi import Form
 
 from auth.core.config import setup_logging
 from auth.core.utils import utils_jwt as auth_utils
 from auth.schemas.token import TokenSchema
 from auth.schemas.user import UserSchema
-from exceptions import InvalidTokenException
+from auth.exceptions import InvalidTokenException
 from jwt import PyJWTError
 from auth.database.user_repo import UserRepository
 

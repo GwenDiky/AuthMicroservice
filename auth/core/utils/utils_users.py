@@ -4,10 +4,9 @@ from fastapi.security import (
 from fastapi import (
     Depends
 )
-from auth.schemas.user import UserSchema
 from auth.schemas.token import TokenSchema
 from auth.core.utils import utils_jwt as auth_utils
-from exceptions import (
+from auth.exceptions import (
     InvalidTokenException,
     AuthFailedException
 )

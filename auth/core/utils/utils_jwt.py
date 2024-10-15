@@ -2,10 +2,8 @@ from datetime import timedelta, datetime
 import jwt
 import time
 from typing import Dict
-import os
 from dotenv import load_dotenv
-import bcrypt
-from exceptions import InvalidTokenException
+from auth.exceptions import InvalidTokenException
 from auth.core.settings import settings
 
 load_dotenv()
