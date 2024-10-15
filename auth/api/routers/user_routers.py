@@ -24,7 +24,8 @@ from auth.schemas.token import TokenSchema
 from auth.schemas.user import UserSchema, UserCreateSchema, UserInDBSchema
 from exceptions import (
     AuthFailedException,
-    SignUpFailedException
+    SignUpFailedException,
+    PasswordNotChangedException
 )
 from sqlalchemy.ext.asyncio import create_async_engine
 from auth.core.settings import settings
@@ -126,13 +127,13 @@ async def change_password(new_password: str, token: str = Depends(oauth2_scheme)
 
     try:
         result = await user_repo.change_password_of_current_user(user.id, hashed_password)
+        if not result:
+            raise PasswordNotChangedException
+
         return result
 
     except PyJWTError:
         raise AuthFailedException
-    except Exception as e:
-        logging.error(f"Error during password change: {e}")
-        raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
 @user_router.post("/forgot-password")
