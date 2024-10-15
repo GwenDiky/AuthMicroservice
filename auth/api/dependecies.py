@@ -54,17 +54,3 @@ async def get_info_of_user_by_token(token: TokenSchema) \
         raise InvalidTokenException
 
     return user
-
-
-async def validate_auth_user_login(
-        username: str = Form(),
-        password: str = Form(),
-) -> UserSchema:
-    if not (await UserRepository().get_user_by_username(username)):
-        raise AuthFailedException
-    else:
-        user = await UserRepository().get_user_by_username(username)
-
-    await compare_passwords(password, user.password)
-
-    return user
