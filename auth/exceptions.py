@@ -1,6 +1,7 @@
+from typing import Any
+
 from fastapi import HTTPException, status
 from sqlalchemy.exc import SQLAlchemyError
-from typing import Any
 
 headers = {"WWW-Authenticate": "Bearer"}
 
@@ -55,7 +56,7 @@ class InvalidTokenException(HTTPException):
         super().__init__(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token",
-            header=header,
+            headers=header,
         )
 
 

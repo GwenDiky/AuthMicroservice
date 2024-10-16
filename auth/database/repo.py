@@ -1,19 +1,17 @@
+import logging
+from abc import ABC, abstractmethod
+
 from sqlalchemy import (
     select
 )
-
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import (
-    AsyncSession,
-    async_sessionmaker,
-    engine
+    AsyncSession
 )
+
 from auth.core.base import Base
 from auth.database.user import User
-import logging
-from sqlalchemy.exc import SQLAlchemyError
 from auth.exceptions import BadRequestException, UserNotFoundException
-from abc import ABC, abstractmethod
-from auth.core.settings import settings
 
 
 class AbstractRepository(ABC):
@@ -37,103 +35,82 @@ class AbstractRepository(ABC):
     async def change_password_of_current_user(self, user: User, hashed_password: str):
         raise NotImplementedError
 
-    @abstractmethod
-    async def get_db(self):
-        raise NotImplementedError
-
 
 class SqlAlchemyARepository(AbstractRepository):
     model = None
 
-    def __init__(self, async_engine: engine):
-        self.db_url = settings.db.db_url
-        self.sessionLocalAsync = async_sessionmaker(
-            bind=async_engine,
-            autoflush=False,
-            autocommit=False,
-            class_=AsyncSession,
-            expire_on_commit=False
-        )
+    def __init__(self, db: AsyncSession):
+        self.db = db
 
-    async def add_new_user(self, user: User):
-        async with self.sessionLocalAsync() as session:
-            try:
-                session.add(user)
-                await session.commit()
-                await session.refresh(user)
-            except SQLAlchemyError as db_error:
-                await session.rollback()
-                logging.error(f"Error occurred: {db_error}")
-                raise SignUpFailedException
-            return user
+    async def add_new_user(self, user: User) -> User:
+        try:
+            self.db.add(user)
+            await self.db.commit()
+            await self.db.refresh(user)
+        except SQLAlchemyError as db_error:
+            await self.db.rollback()
+            logging.error(f"Error occurred: {db_error}")
+            raise SignUpFailedException
+        return user
 
     async def create_user_table(self):
-        async with self.engine.begin() as conn:
+        async with self.db.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 
     async def get_user_by_username(self, username: str):
-        async with self.sessionLocalAsync(expire_on_commit=False) as session:
-            try:
-                query = select(User).where(User.username == username)
-                result = await session.execute(query)
-                user = result.scalar_one_or_none()
-                if not user:
-                    raise UserNotFoundException
-                logging.info(f"data of {user.username}:\n "
-                             f"email: {user.email}\n "
-                             f"birthday: {user.date_of_birth}\n"
-                             f"phone: {user.phone_number}")
-                return user
-            except SQLAlchemyError as db_error:
-                logging.error(f"Database error {db_error}")
-                raise BadRequestException(f"Database error: {db_error}")
+        try:
+            query = select(User).where(User.username == username)
+            result = await self.db.execute(query)
+            user = result.scalar_one_or_none()
+            if not user:
+                raise UserNotFoundException
+            logging.info(f"data of {user.username}:\n "
+                         f"email: {user.email}\n "
+                         f"birthday: {user.date_of_birth}\n"
+                         f"phone: {user.phone_number}")
+            return user
+        except SQLAlchemyError as db_error:
+            logging.error(f"Database error {db_error}")
+            raise BadRequestException(f"Database error: {db_error}")
 
     async def get_user_by_id(self, id: int):
-        async with self.sessionLocalAsync(expire_on_commit=False) as session:
-            try:
-                query = select(User).where(User.id == id)
-                result = await session.execute(query)
-                user = result.scalar_one_or_none()
-                if not user:
-                    raise UserNotFoundException
-                logging.info(f"data of {user.username}:\n "
-                             f"email: {user.email}\n "
-                             f"birthday: {user.date_of_birth}\n"
-                             f"phone: {user.phone_number}")
-                return user
-            except SQLAlchemyError as db_error:
-                logging.error(f"Database error {db_error}")
-                raise BadRequestException(f"Database error: {db_error}")
+        try:
+            query = select(User).where(User.id == id)
+            result = await self.db.execute(query)
+            user = result.scalar_one_or_none()
+            if not user:
+                raise UserNotFoundException
+            logging.info(f"data of {user.username}:\n "
+                         f"email: {user.email}\n "
+                         f"birthday: {user.date_of_birth}\n"
+                         f"phone: {user.phone_number}")
+            return user
+        except SQLAlchemyError as db_error:
+            logging.error(f"Database error {db_error}")
+            raise BadRequestException(f"Database error: {db_error}")
 
     async def change_password_of_current_user(self, id: int, hashed_password: str):
-        async with self.sessionLocalAsync() as session:
-            try:
-                user = await self.get_user_by_id(id)
-                user.password = hashed_password
-                session.add(user)
-                await session.commit()
-                await session.refresh(user)
-            except SQLAlchemyError as db_error:
-                await session.rollback()
-                logging.error(f"Error occurred: {db_error}")
-                raise BadRequestException(f"Database error: {db_error}")
-            return user
-
-
-    async def get_db(self) -> AsyncSession:
-        async with self.sessionLocalAsync() as session:
-            yield session
+        try:
+            user = await self.get_user_by_id(id)
+            user.password = hashed_password
+            self.db.add(user)
+            await self.db.commit()
+            await self.db.refresh(user)
+        except SQLAlchemyError as db_error:
+            await self.db.rollback()
+            logging.error(f"Error occurred: {db_error}")
+            raise BadRequestException(f"Database error: {db_error}")
+        return user
 
     async def delete_user(self, id: int):
-        async with self.sessionLocalAsync() as session:
-            try:
-                query = select(User).where(User.id == id)
-                obj = await session.execute(query)
-                user = obj.scalar_one_or_none()
-                await session.delete(user)
-                await session.commit()
-            except SQLAlchemyError as db_error:
-                await session.rollback()
-                logging.error(f"Error occurred: {db_error}")
-                raise BadRequestException(f"Database error: {db_error}")
-            return {"result": "user was deleted"}
+        try:
+            query = select(User).where(User.id == id)
+            obj = await self.db.execute(query)
+            user = obj.scalar_one_or_none()
+            await self.db.delete(user)
+            await self.db.commit()
+        except SQLAlchemyError as db_error:
+            await self.db.rollback()
+            logging.error(f"Error occurred: {db_error}")
+            raise BadRequestException(f"Database error: {db_error}")
+        return {"result": "user was deleted"}

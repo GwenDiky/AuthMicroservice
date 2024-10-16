@@ -1,12 +1,12 @@
+from datetime import datetime
 
 from sqlalchemy import (
     MetaData, Integer, Column,
-    String, TIMESTAMP, Enum,
-    Boolean
+    String, TIMESTAMP
 )
-from datetime import datetime
-from auth.core.base import Base
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from auth.core.base import Base
 
 metadata = MetaData()
 

@@ -1,5 +1,5 @@
-from dotenv import load_dotenv
 import bcrypt
+from dotenv import load_dotenv
 
 load_dotenv()
 

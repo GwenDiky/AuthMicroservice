@@ -1,12 +1,11 @@
+from datetime import date, datetime
 from typing import Optional, Annotated
+from uuid import UUID, uuid4
+
 from annotated_types import MinLen, MaxLen
 from pydantic import (
-    BaseModel, field_validator,
-    EmailStr, ConfigDict, Field)
+    BaseModel, EmailStr, ConfigDict, Field)
 from pydantic_extra_types.phone_numbers import PhoneNumber
-from datetime import date, datetime
-from uuid import UUID, uuid4
-from enum import Enum
 
 
 class UserSchema(BaseModel):

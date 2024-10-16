@@ -1,19 +1,21 @@
-from fastapi.security import (
-    HTTPAuthorizationCredentials,
-)
+import logging
+
+import bcrypt
+import jwt
 from fastapi import (
     Depends
 )
-from auth.schemas.token import TokenSchema
+from fastapi.security import (
+    HTTPAuthorizationCredentials,
+)
+
+from auth.core.config import http_bearer, setup_logging
 from auth.core.utils import utils_jwt as auth_utils
 from auth.exceptions import (
     InvalidTokenException,
     AuthFailedException
 )
-import jwt
-import logging
-from auth.core.config import http_bearer, setup_logging
-import bcrypt
+from auth.schemas.token import TokenSchema
 
 setup_logging()
 

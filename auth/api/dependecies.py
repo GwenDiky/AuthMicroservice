@@ -1,12 +1,13 @@
-from fastapi import Form
+from jwt import PyJWTError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.core.config import setup_logging
-from auth.core.utils import utils_jwt as auth_utils
-from auth.schemas.token import TokenSchema
-from auth.schemas.user import UserSchema
-from auth.exceptions import InvalidTokenException
-from jwt import PyJWTError
+from auth.core.utils.utils_jwt import decode_jwt
 from auth.database.user_repo import UserRepository
+from auth.exceptions import InvalidTokenException
+from auth.schemas.token import TokenSchema
+from auth.schemas.user import UserCreateSchema
+from auth.schemas.user import UserInDBSchema
 
 setup_logging()
 
@@ -24,15 +25,14 @@ class PermissionChecker:
     #         )
 
 
-async def get_current_auth_user(payload)\
-        -> UserSchema:
+async def get_current_auth_user(token: str, db: AsyncSession) -> UserCreateSchema:
     try:
-        username = payload.get("username")
-
+        payload = await decode_jwt(token)
+        username = payload.get('username')
         if username is None:
             raise AuthFailedException
 
-        user = await UserRepository().get_user_by_username(username)
+        user = await UserRepository(db).get_user_by_username(username)
 
         if not user:
             raise AuthFailedException
@@ -42,13 +42,14 @@ async def get_current_auth_user(payload)\
         raise AuthFailedException
 
 
-async def get_info_of_user_by_token(token: TokenSchema) \
-        -> UserSchema:
+
+async def get_info_of_user_by_token(token: TokenSchema, db: AsyncSession) \
+        -> UserInDBSchema:
     token_credentials = token.access_token
-    payload = await auth_utils.decode_jwt(token_credentials)
+    payload = await decode_jwt(token_credentials)
 
     username = payload.get("username")
-    user = await UserRepository().get_user_by_username(username)
+    user = await UserRepository(db).get_user_by_username(username)
 
     if not user:
         raise InvalidTokenException

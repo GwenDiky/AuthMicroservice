@@ -1,8 +1,7 @@
-import os
-from dotenv import load_dotenv
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from auth.database.user_repo import UserRepository
 import logging
+
+from dotenv import load_dotenv
+from fastapi.security import HTTPBearer
 
 load_dotenv()
 http_bearer = HTTPBearer()
