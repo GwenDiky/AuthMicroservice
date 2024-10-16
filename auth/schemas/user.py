@@ -4,7 +4,7 @@ from pydantic import (
     BaseModel, field_validator,
     EmailStr, ConfigDict, Field)
 from pydantic_extra_types.phone_numbers import PhoneNumber
-from datetime import date
+from datetime import date, datetime
 from uuid import UUID, uuid4
 from enum import Enum
 
@@ -35,11 +35,11 @@ class UserCreateSchema(BaseModel):
 
 
 class UserInDBSchema(BaseModel):
-    id: UUID
+    id: int
     username: Annotated[str, MinLen(3), MaxLen(50)]
     password: str
     email: Optional[EmailStr]
-    created_at: date
+    created_at: datetime
     date_of_birth: date
     phone_number: Optional[PhoneNumber]
     role: str
