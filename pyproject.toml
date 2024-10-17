@@ -24,6 +24,7 @@ fastapi-jwt = "^0.3.0"
 authlib = "^1.3.2"
 pydantic-settings = "^2.5.2"
 fastapi-oauth2 = "^1.3.0"
+fastapi-mail = "^1.4.1"
 
 [tool.poetry.group.dev.dependencies]
 httpx = "^0.27.2"
