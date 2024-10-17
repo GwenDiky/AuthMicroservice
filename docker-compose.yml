@@ -1,0 +1,70 @@
+version: '3.7'
+
+services:
+  auth-auth:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: "auth-auth"
+    restart: always
+    volumes:
+      - .:/app
+    ports:
+      - "8083:8083"
+    environment:
+      - PYTHONBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONPATH=/app
+    depends_on:
+      - pgdb
+      - redis
+  pgdb:
+    image: postgres:bullseye
+    restart: always
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    env_file:
+      - .env
+    container_name: pgdb_auth
+    ports:
+      - "5434:5434"
+
+
+  redis:
+    image: redis:alpine
+    expose:
+      - 6379
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: 'rabbitmq_auth'
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - ./rabbitmq-data:/var/lib/rabbitmq/
+      - ./rabbitmq-log:/var/log/rabbitmq
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+
+volumes:
+  postgres-data:
+  redis-data:
