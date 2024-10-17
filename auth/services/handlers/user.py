@@ -80,8 +80,14 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(),
 
 
 @user_router.get("/me", response_model=UserCreateSchema)
-async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_async_session)) \
+async def get_current_user(token: str = Depends(oauth2_scheme),
+                           db: AsyncSession = Depends(get_async_session),
+                           redis_client=Depends(get_redis)
+                           ) \
         -> UserCreateSchema:
+    if await is_token_blacklisted(token, redis_client):
+        logging.info("Token is blacklisted")
+        raise InvalidTokenException
     return await get_current_auth_user(token, db)
 
 

@@ -8,6 +8,7 @@ from auth.exceptions import InvalidTokenException
 from auth.schemas.token import TokenSchema
 from auth.schemas.user import UserCreateSchema
 from auth.schemas.user import UserInDBSchema
+from auth.core.utils.redis_client import get_redis, is_token_blacklisted, add_token_to_blacklist
 
 setup_logging()
 
