@@ -27,9 +27,31 @@ class JWTSettings(BaseSettings):
         extra="allow"
     )
 
+
+class MailSettings(BaseSettings):
+    mail_username: str = Field(validation_alias="MAIL_USERNAME")
+    mail_password: str = Field(validation_alias="MAIL_PASSWORD")
+    mail_from: str = Field(validation_alias="MAIL_FROM")
+    mail_port: int = Field(validation_alias="MAIL_PORT")
+    mail_server: str = Field(validation_alias="MAIL_SERVER")
+    mail_from_name: str = Field(validation_alias="MAIL_FROM_NAME")
+    mail_ssl_tls: bool = Field(validation_alias="MAIL_SSL_TLS")
+    mail_starttls: bool = Field(validation_alias="MAIL_STARTTLS")
+    mail_use_credentials: bool = Field(validation_alias="USE_CREDENTIALS")
+    mail_validate_certs: bool = Field(validation_alias="VALIDATE_CERTS")
+
+    model_config = SettingsConfigDict(
+        env_file='.env',
+        env_file_encoding='utf-8',
+        case_sensitive=True,
+        extra="allow"
+    )
+
+
 class Settings(BaseSettings):
     db: DbSettings = DbSettings()
     jwt: JWTSettings = JWTSettings()
+    mail: MailSettings = MailSettings()
 
 
 settings = Settings()
