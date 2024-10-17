@@ -24,7 +24,7 @@ mail_config = ConnectionConfig(
     USE_CREDENTIALS = settings.mail.mail_use_credentials,
     VALIDATE_CERTS = settings.mail.mail_validate_certs,
 
-    # TEMPLATE_FOLDER=Path(Base_DIR, 'templates')
+    TEMPLATE_FOLDER=Path(Base_DIR, 'templates')
 )
 
 mail = FastMail(
