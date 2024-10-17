@@ -24,10 +24,11 @@ from auth.database.user_repo import UserRepository
 from auth.exceptions import (
     AuthFailedException,
     SignUpFailedException,
-    PasswordNotChangedException
+    PasswordNotChangedException, InvalidTokenException
 )
 from auth.schemas.token import TokenSchema
 from auth.schemas.user import UserCreateSchema, UserInDBSchema
+from auth.core.utils.redis_client import add_token_to_blacklist, is_token_blacklisted, get_redis
 
 setup_logging()
 
@@ -105,8 +106,16 @@ async def get_info_by_token(token: TokenSchema, db: AsyncSession = Depends(get_a
 
 
 @user_router.post("/logout")
-async def logout():
-    ...
+async def logout(token: str = Depends(oauth2_scheme),
+                 redis_client=Depends(get_redis)) -> dict:
+    logging.info(f"Current token: {token}")
+
+    if not token:
+        logging.error("Token wasn't provided")
+        raise InvalidTokenException
+
+    await add_token_to_blacklist(token, redis_client)
+    return {"message": "Successfully logged out"}
 
 
 @user_router.put("/change-password")
