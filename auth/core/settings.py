@@ -35,10 +35,10 @@ class MailSettings(BaseSettings):
     mail_port: int = Field(validation_alias="MAIL_PORT")
     mail_server: str = Field(validation_alias="MAIL_SERVER")
     mail_from_name: str = Field(validation_alias="MAIL_FROM_NAME")
-    mail_ssl_tls: bool = Field(validation_alias="MAIL_SSL_TLS")
-    mail_starttls: bool = Field(validation_alias="MAIL_STARTTLS")
-    mail_use_credentials: bool = Field(validation_alias="USE_CREDENTIALS")
-    mail_validate_certs: bool = Field(validation_alias="VALIDATE_CERTS")
+    mail_ssl_tls: bool = False
+    mail_starttls: bool = True
+    mail_use_credentials: bool = True
+    mail_validate_certs: bool = True
 
     model_config = SettingsConfigDict(
         env_file='.env',
