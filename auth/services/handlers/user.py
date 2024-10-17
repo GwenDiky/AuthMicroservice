@@ -24,10 +24,11 @@ from auth.database.user_repo import UserRepository
 from auth.exceptions import (
     AuthFailedException,
     SignUpFailedException,
-    PasswordNotChangedException
+    PasswordNotChangedException,
+    ProfileNotChangedException
 )
 from auth.schemas.token import TokenSchema
-from auth.schemas.user import UserCreateSchema, UserInDBSchema
+from auth.schemas.user import UserCreateSchema, UserInDBSchema, UserUpdateSchema
 
 setup_logging()
 
@@ -124,6 +125,27 @@ async def change_password(new_password: str, token: str = Depends(oauth2_scheme)
 
     except PyJWTError:
         raise AuthFailedException
+
+
+@user_router.put('me/update-profile')
+async def update_profile_of_current_user(user: UserUpdateSchema,
+                                         token: str = Depends(oauth2_scheme),
+                                         db: AsyncSession = Depends(get_async_session)
+                                         ):
+    user_data = user.model_dump()
+    user_in_db = await get_current_auth_user(token, db)
+
+    try:
+        result = await UserRepository(db).update_profile_of_current_user(user_in_db.id, user_data)
+        if not result:
+            raise ProfileNotChangedException
+        logging.info("Profile was changed successfully")
+        return result
+
+    except PyJWTError:
+        raise AuthFailedException
+
+
 
 
 @user_router.post("/forgot-password")

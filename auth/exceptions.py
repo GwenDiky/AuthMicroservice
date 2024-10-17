@@ -14,6 +14,13 @@ class PasswordNotChangedException(HTTPException):
             headers=headers
         )
 
+class ProfileNotChangedException(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(
+            status_code=status.HTTP_417_EXPECTATION_FAILED,
+            detail="Profile wasn't changed",
+            headers=headers
+        )
 
 class UserNotFoundException(HTTPException):
     def __init__(self) -> None:

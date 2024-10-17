@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import (
 from auth.core.base import Base
 from auth.database.user import User
 from auth.exceptions import BadRequestException, UserNotFoundException
+from datetime import datetime
 
 
 class AbstractRepository(ABC):
@@ -33,6 +34,11 @@ class AbstractRepository(ABC):
 
     @abstractmethod
     async def change_password_of_current_user(self, user: User, hashed_password: str):
+        raise NotImplementedError
+
+    @abstractmethod
+    async def update_profile_of_current_user(self, id: int,
+                                             user_data: dict) -> User:
         raise NotImplementedError
 
 
@@ -114,3 +120,24 @@ class SqlAlchemyARepository(AbstractRepository):
             logging.error(f"Error occurred: {db_error}")
             raise BadRequestException(f"Database error: {db_error}")
         return {"result": "user was deleted"}
+
+    async def update_profile_of_current_user(self, id: int,
+                                             user_data: dict) -> User:
+        try:
+            user = await self.get_user_by_id(id)
+            user.username = user_data["username"]
+            user.email = user_data['email']
+            user.date_of_birth = user_data['date_of_birth']
+            user.phone_number = user_data['phone_number']
+
+            self.db.add(user)
+            await self.db.commit()
+            await self.db.refresh(user)
+        except SQLAlchemyError as db_error:
+            await self.db.rollback()
+            logging.error(f"Error occurred: {db_error}")
+            raise BadRequestException(f"Database error: {db_error}")
+        return user
+
+
+

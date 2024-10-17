@@ -42,3 +42,9 @@ class UserInDBSchema(BaseModel):
     date_of_birth: date
     phone_number: Optional[PhoneNumber]
     role: str
+
+class UserUpdateSchema(BaseModel):
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
+    date_of_birth: Optional[datetime] = None
+    phone_number: Optional[PhoneNumber] = None
