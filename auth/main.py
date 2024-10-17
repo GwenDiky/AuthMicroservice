@@ -1,10 +1,14 @@
+from sys import prefix
+
 import uvicorn
 from fastapi import FastAPI
 
 from auth.services.handlers.user import user_router
+from auth.services.handlers.mail import mail_router
 
 app = FastAPI()
 app.include_router(user_router, prefix="/api/user", tags=['authentication'])
+app.include_router(mail_router, prefix="/messages", tags=['messages'])
 
 
 if __name__ == "__main__":

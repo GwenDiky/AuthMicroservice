@@ -1,6 +1,7 @@
 from fastapi_mail import (
     FastMail,
-    ConnectionConfig
+    ConnectionConfig,
+    MessageSchema
 )
 from auth.core.settings import settings
 from pathlib import Path
@@ -31,3 +32,11 @@ mail = FastMail(
     config=mail_config
 )
 
+async def create_message(recipients: list[str], subject: str, body: str):
+    message = MessageSchema(
+        recipients=recipients,
+        subject=subject,
+        body=body,
+        subtype="html"
+    )
+    return message
