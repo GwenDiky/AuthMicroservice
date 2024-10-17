@@ -93,9 +93,14 @@ async def get_current_user(token: str = Depends(oauth2_scheme),
 
 @user_router.post("/refresh-token", response_model=TokenSchema)
 async def refresh_token(token: str = Depends(oauth2_scheme),
-                        db: AsyncSession = Depends(get_async_session)) \
+                        db: AsyncSession = Depends(get_async_session),
+                        redis_client=Depends(get_redis)) \
         -> TokenSchema:
     try:
+        if await is_token_blacklisted(token, redis_client):
+            logging.info("Token is blacklisted")
+            raise InvalidTokenException
+
         user = await get_current_auth_user(token, db)
         new_token = jwt.encode({"sub": user.id, "username": user.username}, settings.jwt.jwt_secret, algorithm=settings.jwt.jwt_algorithm)
         return TokenSchema(
@@ -125,8 +130,15 @@ async def logout(token: str = Depends(oauth2_scheme),
 
 
 @user_router.put("/change-password")
-async def change_password(new_password: str, token: str = Depends(oauth2_scheme),
-                          db: AsyncSession = Depends(get_async_session)) -> UserInDBSchema:
+async def change_password(new_password: str,
+                          token: str = Depends(oauth2_scheme),
+                          db: AsyncSession = Depends(get_async_session),
+                          redis_client=Depends(get_redis),
+                          ) -> UserInDBSchema:
+    if await is_token_blacklisted(token, redis_client):
+        logging.info("Token is blacklisted")
+        raise InvalidTokenException
+
     user = await get_current_auth_user(token, db)
     hashed_password = await hash_password(new_password)
 
