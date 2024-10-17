@@ -27,9 +27,23 @@ class JWTSettings(BaseSettings):
         extra="allow"
     )
 
+class RedisSettings(BaseSettings):
+    redis_url: str = Field(validation_alias="REDIS_URL")
+    redis_port: str = Field(validation_alias="REDIS_PORT")
+    redis_password: str = Field(validation_alias="REDIS_PASSWORD")
+
+    model_config = SettingsConfigDict(
+        env_file='.env',
+        env_file_encoding='utf-8',
+        case_sensitive=True,
+        extra="allow"
+    )
+
+
 class Settings(BaseSettings):
     db: DbSettings = DbSettings()
     jwt: JWTSettings = JWTSettings()
+    redis: RedisSettings = RedisSettings()
 
 
 settings = Settings()
