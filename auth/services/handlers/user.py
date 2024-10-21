@@ -25,10 +25,23 @@ from auth.exceptions import (
     AuthFailedException,
     SignUpFailedException,
     PasswordNotChangedException,
-    ProfileNotChangedException
+    ProfileNotChangedException,
+    UserNotFoundException
 )
 from auth.schemas.token import TokenSchema
-from auth.schemas.user import UserCreateSchema, UserInDBSchema, UserUpdateSchema
+from auth.schemas.user import (
+    UserCreateSchema,
+    UserInDBSchema,
+    UserUpdateSchema
+)
+from auth.core.utils.utils_mail import (
+    create_urL_safe_token,
+    decode_url_safe_token
+)
+from auth.services.email import mail, create_message
+from fastapi.responses import JSONResponse
+from fastapi import status
+from datetime import datetime
 
 setup_logging()
 
@@ -37,23 +50,74 @@ user_router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/user/login")
 TOKEN_TYPE = "Bearer"
 
+
 @user_router.post("/signup")
 async def signup(user: UserCreateSchema,
-                 db: AsyncSession = Depends(get_async_session))\
+                 db: AsyncSession = Depends(get_async_session)) \
         -> UserInDBSchema:
     hashed_password = await hash_password(user.password)
 
     user_data = user.model_dump()
     user_data['password'] = hashed_password
 
+    email = user_data["email"]
+
     new_user = User(**user_data)
     try:
         result = await UserRepository(db).add_new_user(new_user)
+
+        if isinstance(result.date_of_birth, datetime):
+            result.date_of_birth = result.date_of_birth.date()
+
+
+        token = await create_urL_safe_token(
+            {"email": email}
+        )
+        link = f"http://{settings.domain}/api/user/verify/{token}"
+        html_message = f"""
+        <h1>Verify your Email</h1>
+        <p>PLease click this <a href="{link}">link</a> to verify your email</p>
+        """
+
+        message = await create_message(
+            recipients=[email],
+            subject="Verify your email",
+            body=html_message
+        )
+
+        await mail.send_message(message)
+
     except SignUpFailedException:
         logging.error("User creation failed")
         raise SignUpFailedException
 
     return result
+
+
+@user_router.get('/verify/{token}')
+async def verify_user_account(token: str,
+                              db: AsyncSession = Depends(get_async_session)):
+    token_data = await decode_url_safe_token(token)
+
+    user_email = token_data.get('email')
+
+    if user_email:
+        user = await UserRepository(db).get_user_by_email(user_email)
+
+        if not user:
+            raise UserNotFoundException
+
+        await UserRepository(db).update_status_of_email_verification(user, {'is_verified': True})
+
+        return JSONResponse(
+            content={"message": "Account verified successfully"},
+            status_code=status.HTTP_200_OK
+        )
+    return JSONResponse(
+        content={"message": "Error occurred via verification"},
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+    )
+
 
 
 @user_router.post("/login", response_model=TokenSchema)
@@ -91,7 +155,8 @@ async def refresh_token(token: str = Depends(oauth2_scheme),
         -> TokenSchema:
     try:
         user = await get_current_auth_user(token, db)
-        new_token = jwt.encode({"sub": user.id, "username": user.username}, settings.jwt.jwt_secret, algorithm=settings.jwt.jwt_algorithm)
+        new_token = jwt.encode({"sub": user.id, "username": user.username}, settings.jwt.jwt_secret,
+                               algorithm=settings.jwt.jwt_algorithm)
         return TokenSchema(
             access_token=new_token,
             token_type=TOKEN_TYPE
@@ -144,8 +209,6 @@ async def update_profile_of_current_user(user: UserUpdateSchema,
 
     except PyJWTError:
         raise AuthFailedException
-
-
 
 
 @user_router.post("/forgot-password")

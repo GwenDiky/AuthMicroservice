@@ -11,7 +11,11 @@ from sqlalchemy.ext.asyncio import (
 
 from auth.core.base import Base
 from auth.database.user import User
-from auth.exceptions import BadRequestException, UserNotFoundException
+from auth.exceptions import (
+    BadRequestException,
+    UserNotFoundException,
+    SignUpFailedException
+)
 from datetime import datetime
 
 
@@ -29,6 +33,11 @@ class AbstractRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def get_user_by_email(self, email: str):
+        raise NotImplementedError
+
+
+    @abstractmethod
     async def get_user_by_id(self, id: int):
         raise NotImplementedError
 
@@ -39,6 +48,10 @@ class AbstractRepository(ABC):
     @abstractmethod
     async def update_profile_of_current_user(self, id: int,
                                              user_data: dict) -> User:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def update_status_of_email_verification(self, user: User, user_data: dict) -> User:
         raise NotImplementedError
 
 
@@ -66,6 +79,22 @@ class SqlAlchemyARepository(AbstractRepository):
     async def get_user_by_username(self, username: str):
         try:
             query = select(User).where(User.username == username)
+            result = await self.db.execute(query)
+            user = result.scalar_one_or_none()
+            if not user:
+                raise UserNotFoundException
+            logging.info(f"data of {user.username}:\n "
+                         f"email: {user.email}\n "
+                         f"birthday: {user.date_of_birth}\n"
+                         f"phone: {user.phone_number}")
+            return user
+        except SQLAlchemyError as db_error:
+            logging.error(f"Database error {db_error}")
+            raise BadRequestException(f"Database error: {db_error}")
+
+    async def get_user_by_email(self, email: str):
+        try:
+            query = select(User).where(User.email == email)
             result = await self.db.execute(query)
             user = result.scalar_one_or_none()
             if not user:
@@ -138,6 +167,24 @@ class SqlAlchemyARepository(AbstractRepository):
             logging.error(f"Error occurred: {db_error}")
             raise BadRequestException(f"Database error: {db_error}")
         return user
+
+    async def update_status_of_email_verification(self, user: User, user_data: dict) -> User:
+        try:
+            for k, v in user_data.items():
+                setattr(user, k, v)
+
+            await self.db.commit()
+            await self.db.refresh(user)
+
+        except SQLAlchemyError as db_error:
+            await self.db.rollback()
+            logging.error(f"Error occurred: {db_error}")
+            raise BadRequestException(f"Database error: {db_error}")
+
+        return user
+
+
+
 
 
 

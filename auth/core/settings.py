@@ -8,24 +8,11 @@ class DbSettings(BaseSettings):
     db_password: str = Field(validation_alias="DB_PASSWORD")
     db_name: str = Field(validation_alias="DB_NAME")
 
-    model_config = SettingsConfigDict(
-        env_file='.env',
-        env_file_encoding='utf-8',
-        case_sensitive=True,
-        extra="allow"
-    )
 
 class JWTSettings(BaseSettings):
     jwt_secret: str = Field(validation_alias="JWT_SECRET")
     jwt_algorithm: str = Field(validation_alias="JWT_ALGORITHM")
     access_token_expire_minutes: int = Field(validation_alias="ACCESS_TOKEN_EXPIRE_MINUTES")
-
-    model_config = SettingsConfigDict(
-        env_file='.env',
-        env_file_encoding='utf-8',
-        case_sensitive=True,
-        extra="allow"
-    )
 
 
 class MailSettings(BaseSettings):
@@ -40,6 +27,14 @@ class MailSettings(BaseSettings):
     mail_use_credentials: bool = True
     mail_validate_certs: bool = True
 
+
+class Settings(BaseSettings):
+    db: DbSettings = DbSettings()
+    jwt: JWTSettings = JWTSettings()
+    mail: MailSettings = MailSettings()
+
+    domain: str = Field(validation_alias="DOMAIN")
+
     model_config = SettingsConfigDict(
         env_file='.env',
         env_file_encoding='utf-8',
@@ -48,11 +43,4 @@ class MailSettings(BaseSettings):
     )
 
 
-class Settings(BaseSettings):
-    db: DbSettings = DbSettings()
-    jwt: JWTSettings = JWTSettings()
-    mail: MailSettings = MailSettings()
-
-
 settings = Settings()
-

@@ -21,6 +21,7 @@ class UserSchema(BaseModel):
     phone_number: Optional[PhoneNumber] = None
     email: EmailStr
     password: str
+    is_verified: bool = Field(default=False)
 
 
 class UserCreateSchema(BaseModel):
