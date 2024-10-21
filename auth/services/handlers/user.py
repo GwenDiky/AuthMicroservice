@@ -40,7 +40,7 @@ from auth.core.utils.utils_mail import (
 )
 from auth.services.email import mail, create_message
 from fastapi.responses import JSONResponse
-from fastapi import status
+from fastapi import status, HTTPException
 from datetime import datetime
 
 setup_logging()
@@ -117,6 +117,34 @@ async def verify_user_account(token: str,
         content={"message": "Error occurred via verification"},
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
     )
+
+
+@user_router.post("/resend_verification")
+async def resend_verification(email: str, db: AsyncSession = Depends(get_async_session)):
+    user = await UserRepository(db).get_user_by_email(email)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if user.is_verified:
+        raise HTTPException(status_code=400, detail="User is already verified")
+
+    token = await create_urL_safe_token({"email": email})
+    link = f"http://{settings.domain}/api/user/verify/{token}"
+
+    html_message = f"""
+    <h1>Verify your Email</h1>
+    <p>Please click this <a href="{link}">link</a> to verify your email</p>
+    """
+
+    message = await create_message(
+        recipients=[email],
+        subject="Verify your email",
+        body=html_message
+    )
+
+    await mail.send_message(message)
+
+    return {"message": "Verification email resent successfully"}
 
 
 
