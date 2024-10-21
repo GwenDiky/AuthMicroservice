@@ -9,8 +9,10 @@ from fastapi.security import (
 from jwt import PyJWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from auth.api.dependecies import get_current_auth_user
-from auth.api.dependecies import get_info_of_user_by_token
+from auth.api.dependecies import (
+    get_current_auth_user,
+    get_info_of_user_by_token
+)
 from auth.core.config import setup_logging
 from auth.core.security import hash_password
 from auth.core.settings import settings
@@ -48,7 +50,7 @@ async def signup(user: UserCreateSchema,
 
     new_user = User(**user_data)
     try:
-        result = await UserRepository(db).add_new_user(new_user)
+        result = await UserRepository(db).add_new(new_user)
     except SignUpFailedException:
         logging.error("User creation failed")
         raise SignUpFailedException
