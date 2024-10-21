@@ -24,15 +24,3 @@ class User(Base):
     role = Column("role", String, nullable=False, default="user")
     # role_id = Column(Integer, ForeignKey("roles.id"), nullable=True)
     # role = relationship("Role", back_populates="users")
-
-    @classmethod
-    async def find_by_email(cls, db: AsyncSession, email: str):
-        query = select(cls).where(cls.email == email)
-        result = await db.execute(query)
-        return result.scalars().first()
-
-    @classmethod
-    async def find_by_username(cls, db: AsyncSession, username: str):
-        query = select(cls).where(cls.username == username)
-        result = await db.execute(query)
-        return result.scalars().first()
