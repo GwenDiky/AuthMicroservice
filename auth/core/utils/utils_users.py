@@ -36,7 +36,13 @@ async def refresh_token_of_current_user(token: HTTPAuthorizationCredentials = De
     if not user:
         raise InvalidTokenException
 
-    new_token = await auth_utils.encode_jwt(user.to_dict())
+    new_token = await auth_utils.encode_jwt(
+        {
+            "username": user.username,
+            "password": user.password,
+            "email": user.email
+        }
+    )
     logging.info(f"Token refreshed for user: {username}")
     return TokenSchema(
         access_token=new_token,
