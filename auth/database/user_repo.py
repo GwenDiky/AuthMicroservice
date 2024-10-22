@@ -31,4 +31,3 @@ class UserRepository(SqlAlchemyRepository):
     async def update_profile_of_current_user(self, id: int, obj_data: dict) -> User:
         user = await self.get_user_by_id(id)
         return await super().update_profile_of_current_user(user, obj_data)
-
