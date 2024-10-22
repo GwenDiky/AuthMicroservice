@@ -15,7 +15,7 @@ from auth.api.dependecies import (
 )
 from auth.core.config import setup_logging
 from auth.core.security import hash_password
-from auth.core.settings import settings
+from auth.core.config import settings
 from auth.core.utils.utils_jwt import (
     encode_jwt
 )

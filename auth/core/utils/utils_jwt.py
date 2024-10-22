@@ -5,7 +5,7 @@ from typing import Dict
 import jwt
 from dotenv import load_dotenv
 
-from auth.core.settings import settings
+from auth.core.config import settings
 from auth.exceptions import InvalidTokenException
 
 load_dotenv()
