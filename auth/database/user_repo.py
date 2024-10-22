@@ -1,13 +1,9 @@
 from sqlalchemy.ext.asyncio import (
     AsyncSession
 )
+from auth.database.repo import SqlAlchemyRepository
 
-from auth.api.dependecies import get_current_auth_user
-from auth.database.repo import SqlAlchemyARepository
 from auth.database.user import User
-from sqlalchemy.exc import SQLAlchemyError
-import logging
-from auth.exceptions import SignUpFailedException
 
 
 class UserRepository(SqlAlchemyRepository):
@@ -20,7 +16,16 @@ class UserRepository(SqlAlchemyRepository):
         return await super().add_new(new_object)
 
     async def get_user_by_username(self, username: str) -> User:
-        return await super().get_by_username(model=self.model, username=username)
+            try:
+                query = select(User).where(model.username == username)
+                result = await self.db.execute(query)
+                obj = result.scalar_one_or_none()
+                if not obj:
+                    raise UserNotFoundException
+                return obj
+            except SQLAlchemyError as db_error:
+                logging.error(f"Database error {db_error}")
+                raise BadRequestException(f"Database error: {db_error}")
 
     async def get_user_by_id(self, id: int) -> User:
         return await super().get_by_id(model=self.model, id=id)
@@ -30,4 +35,18 @@ class UserRepository(SqlAlchemyRepository):
 
     async def update_profile_of_current_user(self, id: int, obj_data: dict) -> User:
         user = await self.get_user_by_id(id)
-        return await super().update_profile_of_current_user(user, obj_data)
+        return await super().update_current_obj(user, obj_data)
+
+    async def change_password_of_current_user(self, id: int, hashed_password: str):
+        try:
+            user = await self.get_user_by_id(id)
+            user.password = hashed_password
+            self.db.add(user)
+            await self.db.commit()
+            await self.db.refresh(user)
+        except SQLAlchemyError as db_error:
+            await self.db.rollback()
+            logging.error(f"Error occurred: {db_error}")
+            raise BadRequestException(f"Database error: {db_error}")
+        return user
+

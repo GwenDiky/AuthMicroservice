@@ -26,19 +26,14 @@ class AbstractRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_by_username(self, model: Base, username: str):
-        raise NotImplementedError
-
-    @abstractmethod
     async def get_by_id(self, model: Base, id: int):
         raise NotImplementedError
 
-    @abstractmethod
-    async def change_password_of_current_user(self, user: User, hashed_password: str):
-        raise NotImplementedError
+    async def delete_obj(self, model: Base, id: int):
+       raise NotImplementedError
 
     @abstractmethod
-    async def update_profile_of_current_user(self, model: Base, obj_data: dict):
+    async def update_current_obj(self, model: Base, obj_data: dict):
         raise NotImplementedError
 
 
@@ -62,18 +57,6 @@ class SqlAlchemyRepository(AbstractRepository):
     async def create_table(self):
         async with self.db.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-
-    async def get_by_username(self, model: Base, username: str):
-        try:
-            query = select(model).where(model.username == username)
-            result = await self.db.execute(query)
-            obj = result.scalar_one_or_none()
-            if not obj:
-                raise UserNotFoundException
-            return obj
-        except SQLAlchemyError as db_error:
-            logging.error(f"Database error {db_error}")
-            raise BadRequestException(f"Database error: {db_error}")
 
     async def get_by_id(self, model: Base, id: int):
         try:
@@ -100,20 +83,7 @@ class SqlAlchemyRepository(AbstractRepository):
             raise BadRequestException(f"Database error: {db_error}")
         return {"result": "Object was deleted"}
 
-    async def change_password_of_current_user(self, id: int, hashed_password: str):
-        try:
-            user = await self.get_by_id(id)
-            user.password = hashed_password
-            self.db.add(user)
-            await self.db.commit()
-            await self.db.refresh(user)
-        except SQLAlchemyError as db_error:
-            await self.db.rollback()
-            logging.error(f"Error occurred: {db_error}")
-            raise BadRequestException(f"Database error: {db_error}")
-        return user
-
-    async def update_profile_of_current_user(self, model: Base,
+    async def update_current_obj(self, model: Base,
                                              obj_data: dict):
         try:
             for k, v in obj_data.items():
