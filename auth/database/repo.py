@@ -10,10 +10,7 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from auth.core.base import Base
-from auth.database.user import User
 from auth.exceptions import BadRequestException, UserNotFoundException
-from datetime import datetime
-from auth.core.base import Base
 
 
 class AbstractRepository(ABC):

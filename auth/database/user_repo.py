@@ -1,8 +1,8 @@
 from sqlalchemy.ext.asyncio import (
     AsyncSession
 )
-from auth.database.repo import SqlAlchemyRepository
 
+from auth.database.repo import SqlAlchemyRepository
 from auth.database.user import User
 
 

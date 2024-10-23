@@ -13,9 +13,9 @@ from auth.api.dependecies import (
     get_current_auth_user,
     get_info_of_user_by_token
 )
+from auth.core.config import settings
 from auth.core.config import setup_logging
 from auth.core.security import hash_password
-from auth.core.config import settings
 from auth.core.utils.utils_jwt import (
     encode_jwt
 )

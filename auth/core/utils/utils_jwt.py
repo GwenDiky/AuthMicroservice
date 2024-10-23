@@ -3,12 +3,9 @@ from datetime import timedelta, datetime
 from typing import Dict
 
 import jwt
-from dotenv import load_dotenv
 
 from auth.core.config import settings
 from auth.exceptions import InvalidTokenException
-
-load_dotenv()
 
 
 async def token_response(token: str):

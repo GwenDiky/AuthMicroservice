@@ -2,9 +2,8 @@ from datetime import datetime
 
 from sqlalchemy import (
     MetaData, Integer, Column,
-    String, TIMESTAMP
+    String, TIMESTAMP, Boolean
 )
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.core.base import Base
 

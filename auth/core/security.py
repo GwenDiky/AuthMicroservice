@@ -1,7 +1,4 @@
 import bcrypt
-from dotenv import load_dotenv
-
-load_dotenv()
 
 
 async def hash_password(

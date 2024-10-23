@@ -1,9 +1,7 @@
 import logging
 
-from dotenv import load_dotenv
 from fastapi.security import HTTPBearer
 
-load_dotenv()
 http_bearer = HTTPBearer()
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
