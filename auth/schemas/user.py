@@ -15,7 +15,7 @@ class UserSchema(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     username: str
     created_at: date = Field(default_factory=date.today)
-    role: str = "user"
+    is_superuser: bool = False
     # avatar:
     date_of_birth: Optional[date]
     phone_number: Optional[PhoneNumber] = None
@@ -41,7 +41,7 @@ class UserInDBSchema(BaseModel):
     created_at: datetime
     date_of_birth: date
     phone_number: Optional[PhoneNumber]
-    role: str
+    is_superuser: bool = False
 
 class UserUpdateSchema(BaseModel):
     username: Optional[str] = None
