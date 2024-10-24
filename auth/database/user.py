@@ -21,5 +21,3 @@ class User(Base):
     date_of_birth = Column("date_of_birth", TIMESTAMP(timezone=True), default=datetime.now)
     phone_number = Column("phone_number", String, nullable=True)
     is_superuser = Column("is_superuser", Boolean, default=False)
-    # role_id = Column(Integer, ForeignKey("roles.id"), nullable=True)
-    # role = relationship("Role", back_populates="users")
