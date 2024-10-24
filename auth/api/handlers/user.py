@@ -15,15 +15,14 @@ from auth.api.dependecies import (
 )
 from auth.core.config import settings
 from auth.core.config import setup_logging
-from auth.core.security import hash_password
-from auth.core.utils.redis_client import TOKEN_EXPIRATION_TIME
-from auth.core.utils.utils_jwt import (
+from auth.utils.utils_users import hash_password
+from auth.utils.utils_jwt import (
     encode_jwt
 )
-from auth.core.utils.utils_users import compare_passwords
-from auth.database.core import get_async_session
-from auth.database.user import User
-from auth.database.user_repo import UserRepository
+from auth.utils.utils_users import compare_passwords
+from auth.models.core import get_async_session
+from auth.models.user_model import User
+from auth.services.user import UserRepository
 from auth.exceptions import (
     AuthFailedException,
     SignUpFailedException,
@@ -33,14 +32,13 @@ from auth.exceptions import (
 from auth.schemas.token import TokenSchema
 from auth.schemas.user import UserCreateSchema, UserInDBSchema, UserUpdateSchema
 from datetime import datetime
-from auth.core.utils.utils_mail import (
+from auth.utils.utils_mail import (
     create_urL_safe_token,
     decode_url_safe_token
 )
 from auth.services.email import mail, create_message
-from fastapi.responses import JSONResponse
-from fastapi import HTTPException, status
-from auth.core.utils.redis_client import add_token_to_blacklist, is_token_blacklisted, get_redis
+from fastapi import HTTPException
+from auth.utils.redis_client import add_token_to_blacklist, is_token_blacklisted, get_redis
 
 setup_logging()
 

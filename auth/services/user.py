@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import (
 
 from auth.database.repo import SqlAlchemyRepository
 from sqlalchemy.exc import SQLAlchemyError
-from auth.database.user import User
+from auth.models.user_model import User
 from sqlalchemy import (select)
 from auth.exceptions import BadRequestException
 import logging

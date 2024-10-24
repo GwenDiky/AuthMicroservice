@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from auth.core.base import Base
-from auth.database.user import User
+from auth.models.user_model import User
 from auth.exceptions import (
     BadRequestException,
     UserNotFoundException,
