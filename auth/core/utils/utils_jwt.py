@@ -5,10 +5,8 @@ from typing import Dict
 import jwt
 from dotenv import load_dotenv
 
-from auth.core.settings import settings
+from auth.core.config import settings
 from auth.exceptions import InvalidTokenException
-
-load_dotenv()
 
 
 async def token_response(token: str):
@@ -17,24 +15,23 @@ async def token_response(token: str):
     }
 
 async def encode_jwt(
-        payload: dict,
-        algorithm: str = settings.jwt.jwt_algorithm,
-        secret: str = settings.jwt.jwt_secret,
-        expire: int = settings.jwt.access_token_expire_minutes,
-        expire_timedelta: timedelta | None = None
+    payload: dict,
+    algorithm: str = settings.jwt.jwt_algorithm,
+    secret: str = settings.jwt.jwt_secret,
+    expire_timedelta: timedelta | None = None
 ) -> Dict[str, str]:
-    to_encode = payload.copy()
+    if expire_timedelta is None:
+        expire_timedelta = timedelta(minutes=settings.jwt.access_token_expire_minutes)
+
     now = datetime.now()
+    expire = now + expire_timedelta
 
-    if expire_timedelta:
-        expire = now + expire_timedelta
-    else:
-        expire = now + timedelta(minutes=expire)
-
+    to_encode = payload.copy()
     to_encode.update(
         exp=expire,
         iat=int(time.time()),
     )
+
     token = jwt.encode(to_encode, secret, algorithm=algorithm)
     return token
 

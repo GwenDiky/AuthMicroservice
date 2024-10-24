@@ -4,8 +4,7 @@ from datetime import datetime
 
 from sqlalchemy import (
     MetaData, Integer, Column,
-    String, TIMESTAMP,
-    Boolean, Date
+    String, TIMESTAMP, Boolean
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,7 +24,4 @@ class User(Base):
     created_at = Column("created_at", Date, default=datetime.now)
     date_of_birth = Column("date_of_birth", default=None)
     phone_number = Column("phone_number", String, nullable=True)
-    role = Column("role", String, nullable=False, default="user")
-    # role_id = Column(Integer, ForeignKey("roles.id"), nullable=True)
-    # role = relationship("Role", back_populates="users")
-
+    is_superuser = Column("is_superuser", Boolean, default=False)

@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from auth.core.base import Base
-from auth.core.settings import settings
+from auth.core.config import settings
 
 engine = create_async_engine(
     settings.db.db_url,

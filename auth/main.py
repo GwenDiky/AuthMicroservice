@@ -3,6 +3,7 @@ from sys import prefix
 import uvicorn
 from fastapi import FastAPI
 
+from auth.api.handlers.user import user_router
 from auth.services.handlers.user import user_router
 from auth.services.handlers.mail import mail_router
 
