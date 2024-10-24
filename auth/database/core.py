@@ -19,6 +19,7 @@ sessionLocalAsync = async_sessionmaker(
     expire_on_commit=False
 )
 
+
 async def get_async_session() -> AsyncSession:
     async with sessionLocalAsync() as session:
         try:
@@ -26,7 +27,8 @@ async def get_async_session() -> AsyncSession:
         except:
             await session.rollback()
             raise
-        finally: await session.close()
+        finally:
+            await session.close()
 
 
 async def async_init_db():
@@ -38,4 +40,3 @@ async def clear_db():
     async with engine.begin() as conn:
         for table in reversed(Base.metadata.sorted_tables):
             await conn.execute(table.delete())
-

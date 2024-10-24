@@ -8,9 +8,9 @@ from auth.exceptions import InvalidTokenException
 from auth.schemas.token import TokenSchema
 from auth.schemas.user import UserCreateSchema
 from auth.schemas.user import UserInDBSchema
-from auth.core.utils.redis_client import get_redis, is_token_blacklisted, add_token_to_blacklist
 
 setup_logging()
+
 
 class PermissionChecker:
     def __init__(self, permission: str):
@@ -41,7 +41,6 @@ async def get_current_auth_user(token: str, db: AsyncSession) -> UserCreateSchem
         return user
     except PyJWTError:
         raise AuthFailedException
-
 
 
 async def get_info_of_user_by_token(token: TokenSchema, db: AsyncSession) \

@@ -44,6 +44,7 @@ class UserInDBSchema(BaseModel):
     phone_number: Optional[PhoneNumber]
     is_superuser: bool = False
 
+
 class UserUpdateSchema(BaseModel):
     username: Optional[str] = None
     email: Optional[EmailStr] = None

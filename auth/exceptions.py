@@ -14,6 +14,7 @@ class PasswordNotChangedException(HTTPException):
             headers=headers
         )
 
+
 class ProfileNotChangedException(HTTPException):
     def __init__(self) -> None:
         super().__init__(
@@ -21,6 +22,7 @@ class ProfileNotChangedException(HTTPException):
             detail="Profile wasn't changed",
             headers=headers
         )
+
 
 class UserNotFoundException(HTTPException):
     def __init__(self) -> None:
@@ -49,13 +51,14 @@ class InactiveUserException(HTTPException):
         )
 
 
-class SignUpFailedException(HTTPException):
-    def __init__(self) -> None:
-        super().__init__(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            details="some of fields are incorrect",
-            header=headers,
+class SignUpFailedException(HTTPException, SQLAlchemyError):
+    def __init__(self, detail: Any = None) -> None:
+        HTTPException.__init__(
+            self,
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=detail if detail else "Some of fields are incorrect",
         )
+        SQLAlchemyError.__init__(self)
 
 
 class InvalidTokenException(HTTPException):

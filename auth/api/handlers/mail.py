@@ -8,6 +8,7 @@ setup_logging()
 
 mail_router = APIRouter()
 
+
 @mail_router.post('/send-mail')
 async def send_mail(emails: EmailSchema):
     mails = emails.addresses
@@ -22,5 +23,3 @@ async def send_mail(emails: EmailSchema):
     await mail.send_message(message)
 
     return {"message": "Email sent successfully"}
-
-

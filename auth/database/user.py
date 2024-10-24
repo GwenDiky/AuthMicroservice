@@ -1,12 +1,12 @@
-from datetime import datetime, date
+from datetime import datetime
 
 from datetime import datetime
 
 from sqlalchemy import (
     MetaData, Integer, Column,
-    String, TIMESTAMP, Boolean
+    String, Boolean,
+    Date
 )
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.core.base import Base
 
@@ -22,6 +22,6 @@ class User(Base):
     password = Column("password", String)
     email = Column("email", String, nullable=False, unique=True)
     created_at = Column("created_at", Date, default=datetime.now)
-    date_of_birth = Column("date_of_birth", default=None)
+    date_of_birth = Column("date_of_birth", Date, default=None)
     phone_number = Column("phone_number", String, nullable=True)
     is_superuser = Column("is_superuser", Boolean, default=False)

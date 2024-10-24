@@ -29,7 +29,6 @@ async def refresh_token_of_current_user(token: HTTPAuthorizationCredentials = De
     except jwt.InvalidTokenError:
         raise InvalidTokenException
 
-
     username = payload.get("username")
     user = await user_repo.get_user_by_username(username)
 
