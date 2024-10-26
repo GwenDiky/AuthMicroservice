@@ -1,7 +1,9 @@
 import logging
+from datetime import datetime
 
 import jwt
 from fastapi import APIRouter, Depends
+from fastapi import HTTPException
 from fastapi.security import (
     OAuth2PasswordBearer,
     OAuth2PasswordRequestForm
@@ -15,30 +17,30 @@ from auth.api.dependecies import (
 )
 from auth.core.config import settings
 from auth.core.config import setup_logging
-from auth.utils.utils_users import hash_password
-from auth.utils.utils_jwt import (
-    encode_jwt
-)
-from auth.utils.utils_users import compare_passwords
-from auth.models.core import get_async_session
-from auth.models.user_model import User
-from auth.services.user import UserRepository
+from auth.core.config import templates
 from auth.exceptions import (
     AuthFailedException,
     SignUpFailedException,
     PasswordNotChangedException,
     ProfileNotChangedException, InvalidTokenException
 )
+from auth.models.core import get_async_session
+from auth.models.user_model import User
 from auth.schemas.token import TokenSchema
 from auth.schemas.user import UserCreateSchema, UserInDBSchema, UserUpdateSchema
-from datetime import datetime
+from auth.services.email import mail, create_message
+from auth.services.user import UserRepository
+from auth.utils.redis_client import add_token_to_blacklist, is_token_blacklisted, get_redis
+from auth.utils.utils_jwt import (
+    encode_jwt
+)
 from auth.utils.utils_mail import (
     create_urL_safe_token,
-    decode_url_safe_token
+    decode_url_safe_token,
+    forgot_password_send_message
 )
-from auth.services.email import mail, create_message
-from fastapi import HTTPException
-from auth.utils.redis_client import add_token_to_blacklist, is_token_blacklisted, get_redis
+from auth.utils.utils_users import compare_passwords
+from auth.utils.utils_users import hash_password
 
 setup_logging()
 
@@ -70,10 +72,7 @@ async def signup(user: UserCreateSchema,
             {"email": email}
         )
         link = f"http://{settings.domain}/api/user/verify/{token}"
-        html_message = f"""
-        <h1>Verify your Email</h1>
-        <p>PLease click this <a href="{link}">link</a> to verify your email</p>
-        """
+        html_message = templates.get_template("verify-email.html").render(link=link)
 
         message = await create_message(
             recipients=[email],
@@ -89,19 +88,6 @@ async def signup(user: UserCreateSchema,
     return result
 
 
-@user_router.get('/verify/{token}')
-async def verify_user_account(token: str,
-                              db: AsyncSession = Depends(get_async_session)):
-    token_data = await decode_url_safe_token(token)
-    user_email = token_data.get('email')
-
-    user = await UserRepository(db).get_user_by_email(user_email)
-    if not user:
-        raise UserNotFoundException
-
-    await UserRepository(db).update_status_of_email_verification(user, {'is_verified': True})
-
-
 @user_router.post("/resend_verification")
 async def resend_verification(email: str, db: AsyncSession = Depends(get_async_session)):
     user = await UserRepository(db).get_user_by_email(email)
@@ -114,10 +100,7 @@ async def resend_verification(email: str, db: AsyncSession = Depends(get_async_s
     token = await create_urL_safe_token({"email": email})
     link = f"http://{settings.domain}/api/user/verify/{token}"
 
-    html_message = f"""
-    <h1>Verify your Email</h1>
-    <p>Please click this <a href="{link}">link</a> to verify your email</p>
-    """
+    html_message = templates.get_template("verify-email.html").render(link=link, username=user.username)
 
     message = await create_message(
         recipients=[email],
@@ -205,7 +188,6 @@ async def logout(token: str = Depends(oauth2_scheme),
     return {"message": "Successfully logged out"}
 
 
-
 @user_router.put("/change-password")
 async def change_password(new_password: str, token: str = Depends(oauth2_scheme),
                           db: AsyncSession = Depends(get_async_session),
@@ -248,9 +230,46 @@ async def update_profile_of_current_user(user: UserUpdateSchema,
         raise AuthFailedException
 
 
+@user_router.get('/verify/{token}')
+async def verify_user_account(token: str,
+                              db: AsyncSession = Depends(get_async_session)):
+    token_data = await decode_url_safe_token(token)
+    user_email = token_data.get('email')
+
+    user = await UserRepository(db).get_user_by_email(user_email)
+    if not user:
+        raise UserNotFoundException
+
+    await UserRepository(db).update_status_of_email_verification(user, {'is_verified': True})
+
+
+@user_router.get('/reset-password/verify/{token}/{new_password}')
+async def verify_user_account_password_forgot(token: str,
+                                              new_password: str,
+                                              db: AsyncSession = Depends(get_async_session)):
+    token_data = await decode_url_safe_token(token)
+    user_email = token_data.get('email')
+
+    user = await UserRepository(db).get_user_by_email(user_email)
+    if not user:
+        raise UserNotFoundException
+
+    hashed_password = await hash_password(new_password)
+    await UserRepository(db).change_password_of_current_user(user.id, hashed_password)
+
+    return {
+        "new_password": user.password
+    }
+
+
 @user_router.post("/forgot-password")
-async def forgot_password():
-    ...
+async def forgot_password(email: str,
+                          new_password: str) \
+        -> dict:
+    await forgot_password_send_message(email, new_password)
+    return {
+        "comments": f"Check up u'r mail: {email}"
+    }
 
 
 @user_router.delete("/me/delete")

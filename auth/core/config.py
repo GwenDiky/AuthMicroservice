@@ -5,7 +5,7 @@ from fastapi.security import HTTPBearer
 http_bearer = HTTPBearer()
 from pydantic import Field
 from pydantic_settings import BaseSettings
-
+from fastapi.templating import Jinja2Templates
 
 class MailSettings(BaseSettings):
     mail_username: str = Field(validation_alias="MAIL_USERNAME")
@@ -57,5 +57,6 @@ def setup_logging():
         ]
     )
 
+templates = Jinja2Templates(directory="templates")
 
 settings = Settings()

@@ -6,7 +6,7 @@ from auth.database.repo import SqlAlchemyRepository
 from sqlalchemy.exc import SQLAlchemyError
 from auth.models.user_model import User
 from sqlalchemy import (select)
-from auth.exceptions import BadRequestException
+from auth.exceptions import BadRequestException, UserNotFoundException
 import logging
 
 class UserRepository(SqlAlchemyRepository):

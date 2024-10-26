@@ -4,6 +4,8 @@ from itsdangerous import URLSafeTimedSerializer
 
 from auth.core.config import settings
 from auth.exceptions import InvalidTokenException
+from auth.core.config import templates
+from auth.services.email import mail, create_message
 
 serializer = URLSafeTimedSerializer(
     secret_key=settings.jwt.jwt_secret,
@@ -25,3 +27,15 @@ async def decode_url_safe_token(token: str):
         return token_data
     except InvalidTokenException:
         logging.error("Token decode was failed")
+
+
+async def forgot_password_send_message(email: str, new_password: str) -> None:
+    token = await create_urL_safe_token({"email": email})
+    link = f"http://{settings.domain}/api/user/reset-password/verify/{token}/{new_password}"
+    html_message = templates.get_template("forgot-password.html").render(link=link)
+    message = await create_message(
+        recipients=[email],
+        subject="Verify your email",
+        body=html_message
+    )
+    await mail.send_message(message)

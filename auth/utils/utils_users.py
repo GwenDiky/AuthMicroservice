@@ -16,6 +16,7 @@ from auth.exceptions import (
     AuthFailedException
 )
 from auth.schemas.token import TokenSchema
+import bcrypt
 
 setup_logging()
 
@@ -53,9 +54,6 @@ async def compare_passwords(password, hashed_password):
     if not bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8')):
         raise AuthFailedException
     return True
-
-
-import bcrypt
 
 
 async def hash_password(
