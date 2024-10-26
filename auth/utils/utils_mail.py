@@ -39,3 +39,16 @@ async def forgot_password_send_message(email: str, new_password: str) -> None:
         body=html_message
     )
     await mail.send_message(message)
+
+async def create_user_send_message(email: str) -> None:
+    token = await create_urL_safe_token(
+        {"email": email}
+    )
+    link = f"http://{settings.domain}/api/user/verify/{token}"
+    html_message = templates.get_template("verify-email.html").render(link=link)
+    message = await create_message(
+        recipients=[email],
+        subject="Verify your email",
+        body=html_message
+    )
+    await mail.send_message(message)

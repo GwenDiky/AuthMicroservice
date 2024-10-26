@@ -37,7 +37,8 @@ from auth.utils.utils_jwt import (
 from auth.utils.utils_mail import (
     create_urL_safe_token,
     decode_url_safe_token,
-    forgot_password_send_message
+    forgot_password_send_message,
+    create_user_send_message
 )
 from auth.utils.utils_users import compare_passwords
 from auth.utils.utils_users import hash_password
@@ -67,20 +68,8 @@ async def signup(user: UserCreateSchema,
 
         if isinstance(result.date_of_birth, datetime):
             result.date_of_birth = result.date_of_birth.date()
+        await create_user_send_message(email=email)
 
-        token = await create_urL_safe_token(
-            {"email": email}
-        )
-        link = f"http://{settings.domain}/api/user/verify/{token}"
-        html_message = templates.get_template("verify-email.html").render(link=link)
-
-        message = await create_message(
-            recipients=[email],
-            subject="Verify your email",
-            body=html_message
-        )
-
-        await mail.send_message(message)
     except SignUpFailedException:
         logging.error("User creation failed")
         raise SignUpFailedException
@@ -241,6 +230,10 @@ async def verify_user_account(token: str,
         raise UserNotFoundException
 
     await UserRepository(db).update_status_of_email_verification(user, {'is_verified': True})
+    return \
+        {
+            "result": f"U'r account '{user.username}' verified successfully!"
+        }
 
 
 @user_router.get('/reset-password/verify/{token}/{new_password}')

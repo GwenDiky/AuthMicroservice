@@ -25,3 +25,4 @@ async def send_mail(emails: EmailSchema):
     return {"message": "Email sent successfully"}
 
 
+
