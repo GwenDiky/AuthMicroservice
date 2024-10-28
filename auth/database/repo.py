@@ -1,8 +1,9 @@
 import logging
+from auth.core.config import setup_logging
 from abc import ABC, abstractmethod
 
 from sqlalchemy import (
-    select
+    select, text
 )
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import (
@@ -20,6 +21,8 @@ from sqlalchemy import func
 import math
 from auth.schemas.page import PageResponse
 from auth.schemas.user import UserInDBSchema
+
+setup_logging()
 
 
 class AbstractRepository(ABC):
@@ -128,14 +131,10 @@ class SqlAlchemyRepository(AbstractRepository):
             model: Base,
             page: int = 1,
             limit: int = 10,
-            columns: str = None,
             sort: str = None,
             filter: str = None,
     ):
         query = select(model)
-
-        if columns is not None and columns != "all":
-            query = select(*convert_columns(columns))
 
         if filter is not None and filter != "null":
             criteria = dict(x.split("*") for x in filter.split('-'))
@@ -148,7 +147,7 @@ class SqlAlchemyRepository(AbstractRepository):
             query = query.filter(or_(*criteria_list))
 
         if sort is not None and sort != "null":
-            query = query.order_by(text(convert_sort(sort)))
+            query = query.order_by(text(self.convert_sort(sort)))
 
         count_query = select(func.count(1)).select_from(query)
 
@@ -172,17 +171,13 @@ class SqlAlchemyRepository(AbstractRepository):
 
     @staticmethod
     def convert_sort(sort):
-        """
-        # join to list with ','
-        new_sort = ','.join(split_sort)
-        """
         return ','.join(sort.split('-'))
 
     @staticmethod
-    def convert_columns(columns):
-        """
-        # seperate string using split ('-')
-        """
-        return list(map(lambda x: column(x), columns.split('-')))
+    def convert_columns(model, columns):
+        if columns is None or columns == "all":
+            return [model]
+        else:
+            return [getattr(model, col.strip()) for col in columns.split('-')]
 
 

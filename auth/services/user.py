@@ -75,8 +75,7 @@ class UserRepository(SqlAlchemyRepository):
     async def get_all_users(self,
                             page: int = 1,
                             limit: int = 10,
-                            columns: str = Query(None, alias="columns"),
                             sort: str = Query(None, alias="sort"),
                             filter: str = Query(None, alias="filter"),
                             ):
-        return await super().get_all(page=page, limit=limit, columns=columns, sort=sort, filter=filter, model=self.model)
+        return await super().get_all(page=page, limit=limit, sort=sort, filter=filter, model=self.model)

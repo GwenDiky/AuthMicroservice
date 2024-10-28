@@ -298,46 +298,31 @@ async def user_to_response(user: User) -> UserInDBSchema:
         is_superuser = user.get("is_superuser"),
     )
 
-# @user_router.get("")
-# async def get_all_person(
-#         page: int = 1,
-#         limit: int = 10,
-#         columns: str = Query(None, alias="columns"),
-#         sort: str = Query(None, alias="sort"),
-#         filter: str = Query(None, alias="filter"),
-#         db: AsyncSession = Depends(get_async_session),
-# ):
-#     result: PageResponse = await UserRepository(db).get_all_users(page, limit, columns, sort, filter)
-#     logging.info("result", result.content)
-#     return result
-
-@user_router.get("", response_model=ResponseSchema, response_model_exclude_none=True)
+@user_router.get("/get-all-users", response_model=ResponseSchema, response_model_exclude_none=True)
 async def get_all_person(
         page: int = 1,
         limit: int = 10,
-        columns: str = Query(None, alias="columns"),
         sort: str = Query(None, alias="sort"),
         filter: str = Query(None, alias="filter"),
         db: AsyncSession = Depends(get_async_session),
 ):
-    result = await UserRepository(db).get_all_users(page, limit, columns, sort, filter)
-
+    result = await UserRepository(db).get_all_users(page, limit, sort, filter)
+    users = [record['User'] for record in result.content]
     user_schema = []
-    for user in result.content:
-        user = user["User"]
+    for user in users:
         user_schema.append(UserSchemaWithoutPassword(
-            id = user.id,
-            username = user.username,
-            created_at = user.created_at,
-            is_superuser = user.is_superuser,
-            date_of_birth = user.date_of_birth,
-            phone_number = user.phone_number,
-            email = user.email,
-            is_verified = user.is_verified
-        ))
+                id = user.id,
+                username = user.username,
+                created_at = user.created_at,
+                is_superuser = user.is_superuser,
+                date_of_birth = user.date_of_birth,
+                phone_number = user.phone_number,
+                email = user.email,
+                is_verified = user.is_verified
+            ))
 
     return ResponseSchema(
-        detail="Successfully user's data!",
+        detail="Successfully fetched user's data!",
         result={
             "page_number": page,
             "page_size": limit,
