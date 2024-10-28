@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import (
     AsyncSession
 )
-
+from fastapi import Query
 from auth.database.repo import SqlAlchemyRepository
 from sqlalchemy.exc import SQLAlchemyError
 from auth.models.user_model import User
@@ -71,3 +71,12 @@ class UserRepository(SqlAlchemyRepository):
         except SQLAlchemyError as db_error:
             logging.error(f"Database error {db_error}")
             raise BadRequestException(f"Database error: {db_error}")
+
+    async def get_all_users(self,
+                            page: int = 1,
+                            limit: int = 10,
+                            columns: str = Query(None, alias="columns"),
+                            sort: str = Query(None, alias="sort"),
+                            filter: str = Query(None, alias="filter"),
+                            ):
+        return await super().get_all(page=page, limit=limit, columns=columns, sort=sort, filter=filter, model=self.model)

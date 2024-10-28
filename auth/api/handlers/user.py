@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-
+from fastapi import Query
 import jwt
 from fastapi import APIRouter, Depends
 from fastapi import HTTPException
@@ -8,6 +8,7 @@ from fastapi.security import (
     OAuth2PasswordBearer,
     OAuth2PasswordRequestForm
 )
+from typing import List
 from jwt import PyJWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -27,7 +28,12 @@ from auth.exceptions import (
 from auth.models.core import get_async_session
 from auth.models.user_model import User
 from auth.schemas.token import TokenSchema
-from auth.schemas.user import UserCreateSchema, UserInDBSchema, UserUpdateSchema
+from auth.schemas.user import (
+    UserCreateSchema,
+    UserInDBSchema,
+    UserUpdateSchema,
+    UserSchemaWithoutPassword
+)
 from auth.services.email import mail, create_message
 from auth.services.user import UserRepository
 from auth.utils.redis_client import add_token_to_blacklist, is_token_blacklisted, get_redis
@@ -42,6 +48,7 @@ from auth.utils.utils_mail import (
 )
 from auth.utils.utils_users import compare_passwords
 from auth.utils.utils_users import hash_password
+from auth.schemas.page import PageResponse, ResponseSchema
 
 setup_logging()
 
@@ -276,3 +283,66 @@ async def delete_me(token: str = Depends(oauth2_scheme),
         return result
     except PyJWTError:
         raise AuthFailedException
+
+
+
+async def user_to_response(user: User) -> UserInDBSchema:
+    return UserInDBSchema(
+        id = user.get("id"),
+        username = user.get("username"),
+        password = user.get("password"),
+        email = user.get("email"),
+        created_at = user.get("created_at"),
+        date_of_birth = user.get("date_of_birth"),
+        phone_number = user.get("phone_number"),
+        is_superuser = user.get("is_superuser"),
+    )
+
+# @user_router.get("")
+# async def get_all_person(
+#         page: int = 1,
+#         limit: int = 10,
+#         columns: str = Query(None, alias="columns"),
+#         sort: str = Query(None, alias="sort"),
+#         filter: str = Query(None, alias="filter"),
+#         db: AsyncSession = Depends(get_async_session),
+# ):
+#     result: PageResponse = await UserRepository(db).get_all_users(page, limit, columns, sort, filter)
+#     logging.info("result", result.content)
+#     return result
+
+@user_router.get("", response_model=ResponseSchema, response_model_exclude_none=True)
+async def get_all_person(
+        page: int = 1,
+        limit: int = 10,
+        columns: str = Query(None, alias="columns"),
+        sort: str = Query(None, alias="sort"),
+        filter: str = Query(None, alias="filter"),
+        db: AsyncSession = Depends(get_async_session),
+):
+    result = await UserRepository(db).get_all_users(page, limit, columns, sort, filter)
+
+    user_schema = []
+    for user in result.content:
+        user = user["User"]
+        user_schema.append(UserSchemaWithoutPassword(
+            id = user.id,
+            username = user.username,
+            created_at = user.created_at,
+            is_superuser = user.is_superuser,
+            date_of_birth = user.date_of_birth,
+            phone_number = user.phone_number,
+            email = user.email,
+            is_verified = user.is_verified
+        ))
+
+    return ResponseSchema(
+        detail="Successfully user's data!",
+        result={
+            "page_number": page,
+            "page_size": limit,
+            "total_pages": result.total_pages,
+            "total_record": result.total_record,
+            "content": user_schema,
+        }
+    )

@@ -16,6 +16,10 @@ from auth.exceptions import (
     UserNotFoundException,
     SignUpFailedException
 )
+from sqlalchemy import func
+import math
+from auth.schemas.page import PageResponse
+from auth.schemas.user import UserInDBSchema
 
 
 class AbstractRepository(ABC):
@@ -118,3 +122,67 @@ class SqlAlchemyRepository(AbstractRepository):
             raise BadRequestException(f"Database error: {db_error}")
 
         return model
+
+    async def get_all(
+            self,
+            model: Base,
+            page: int = 1,
+            limit: int = 10,
+            columns: str = None,
+            sort: str = None,
+            filter: str = None,
+    ):
+        query = select(model)
+
+        if columns is not None and columns != "all":
+            query = select(*convert_columns(columns))
+
+        if filter is not None and filter != "null":
+            criteria = dict(x.split("*") for x in filter.split('-'))
+            criteria_list = []
+            for attr, value in criteria.items():
+                _attr = getattr(model, attr)
+                search = "%{}%".format(value)
+                criteria_list.append(_attr.like(search))
+
+            query = query.filter(or_(*criteria_list))
+
+        if sort is not None and sort != "null":
+            query = query.order_by(text(convert_sort(sort)))
+
+        count_query = select(func.count(1)).select_from(query)
+
+        offset_page = (page - 1) * limit
+        query = query.offset(offset_page).limit(limit)
+
+        total_record = (await self.db.execute(count_query)).scalar() or 0
+        result = await self.db.execute(query)
+
+        result_list = [dict(row) for row in result.mappings()]
+
+        total_page = math.ceil(total_record / limit)
+
+        return PageResponse(
+            page_number=page,
+            page_size=limit,
+            total_pages=total_page,
+            total_record=total_record,
+            content=result_list
+        )
+
+    @staticmethod
+    def convert_sort(sort):
+        """
+        # join to list with ','
+        new_sort = ','.join(split_sort)
+        """
+        return ','.join(sort.split('-'))
+
+    @staticmethod
+    def convert_columns(columns):
+        """
+        # seperate string using split ('-')
+        """
+        return list(map(lambda x: column(x), columns.split('-')))
+
+

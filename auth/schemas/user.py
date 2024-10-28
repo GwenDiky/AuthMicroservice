@@ -23,6 +23,17 @@ class UserSchema(BaseModel):
     password: str
     is_verified: bool = Field(default=False)
 
+class UserSchemaWithoutPassword(BaseModel):
+    id: int
+    username: str
+    created_at: date = Field(default_factory=date.today)
+    is_superuser: bool = False
+    # avatar:
+    date_of_birth: Optional[date]
+    phone_number: Optional[PhoneNumber] = None
+    email: EmailStr
+    is_verified: bool = Field(default=False)
+
 
 class UserCreateSchema(BaseModel):
     username: Annotated[str, MinLen(3), MaxLen(50)]
@@ -43,6 +54,9 @@ class UserInDBSchema(BaseModel):
     date_of_birth: date
     phone_number: Optional[PhoneNumber]
     is_superuser: bool = False
+
+    class Config:
+        from_attributes = True
 
 
 class UserUpdateSchema(BaseModel):
