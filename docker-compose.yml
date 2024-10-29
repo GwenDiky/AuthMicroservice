@@ -4,11 +4,13 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: "auth-auth"
-    restart: always
+#    restart: always
     volumes:
       - .:/app
     ports:
       - "8083:8083"
+    env_file:
+      - .env
     environment:
       - PYTHONBUFFERED=1
       - PYTHONDONTWRITEBYTECODE=1
@@ -29,7 +31,7 @@ services:
       - .env
     container_name: pgdb_auth
     ports:
-      - "5434:5434"
+      - "5434:5432"
 
 
   redis:
@@ -61,6 +63,17 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+  localstack:
+    image: localstack/localstack
+    environment:
+      - SERVICES=ses
+      - AWS_DEFAULT_REGION=us-east-1
+    ports:
+      - "4566:4566"
+      - "4571:4571"
+    volumes:
+      - "./localstack:/var/lib/localstack"
 
 
 volumes:

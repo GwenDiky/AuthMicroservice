@@ -282,3 +282,5 @@ docker/data
 
 /alembic/
 /migration/
+
+/localstack/

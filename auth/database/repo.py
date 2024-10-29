@@ -3,7 +3,7 @@ from auth.core.config import setup_logging
 from abc import ABC, abstractmethod
 
 from sqlalchemy import (
-    select, text
+    select, text, or_
 )
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import (
@@ -127,22 +127,28 @@ class SqlAlchemyRepository(AbstractRepository):
         return model
 
     async def get_all(
-            self,
-            model: Base,
-            page: int = 1,
-            limit: int = 10,
-            sort: str = None,
+            self, model: Base, page: int = 1,
+            limit: int = 10, sort: str = None,
             filter: str = None,
     ):
         query = select(model)
-
         if filter is not None and filter != "null":
-            criteria = dict(x.split("*") for x in filter.split('-'))
+            try:
+                criteria = dict(x.split("*") for x in filter.split('-'))
+            except ValueError:
+                raise ValueError("Filter format is incorrect. Ensure it is in the format 'key*value-key*value'.")
+
             criteria_list = []
             for attr, value in criteria.items():
                 _attr = getattr(model, attr)
-                search = "%{}%".format(value)
-                criteria_list.append(_attr.like(search))
+
+                if value.lower() == "true":
+                    criteria_list.append(_attr.is_(True))
+                elif value.lower() == "false":
+                    criteria_list.append(_attr.is_(False))
+                else:
+                    search = "%{}%".format(value)
+                    criteria_list.append(_attr.like(search))
 
             query = query.filter(or_(*criteria_list))
 

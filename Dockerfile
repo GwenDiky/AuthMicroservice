@@ -16,4 +16,4 @@ RUN poetry install --no-root
 
 COPY . .
 
-# CMD ["uvicorn", "auth.api.main:app", "--host", "0.0.0.0", "--port", "8083", "--reload"]
+CMD ["uvicorn", "auth.main:app", "--host", "0.0.0.0", "--port", "8083", "--reload"]

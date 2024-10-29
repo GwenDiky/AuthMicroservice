@@ -6,6 +6,8 @@ from auth.core.config import settings
 from auth.exceptions import InvalidTokenException
 from auth.core.config import templates
 from auth.services.email import mail, create_message
+import aioboto3
+
 
 serializer = URLSafeTimedSerializer(
     secret_key=settings.jwt.jwt_secret,

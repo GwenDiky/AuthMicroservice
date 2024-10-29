@@ -38,20 +38,11 @@ class RedisSettings(BaseSettings):
     redis_port: str = Field(validation_alias="REDIS_PORT")
     redis_password: str = Field(validation_alias="REDIS_PASSWORD")
 
-
-class AwsSettings(BaseSettings):
-
-    AWS_ACCESS_KEY_ID: str
-    AWS_SECRET_ACCESS_KEY: str
-    AWS_ENDPOINT_URL: str
-    AWS_REGION_NAME: str
-
 class Settings(BaseSettings):
     db: DbSettings = DbSettings()
     jwt: JWTSettings = JWTSettings()
     mail: MailSettings = MailSettings()
     redis: RedisSettings = RedisSettings()
-    aws: AwsSettings = AwsSettings()
 
     domain: str = Field(validation_alias="DOMAIN")
 
