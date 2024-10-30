@@ -8,29 +8,69 @@ from fastapi_mail import (
 
 from auth.core.config import settings
 from auth.core.config import setup_logging
+import boto3
+from botocore.exceptions import ClientError
+import logging
 
 setup_logging()
 
 Base_DIR = Path(__file__).resolve().parent.parent.parent
 
-mail_config = ConnectionConfig(
-    MAIL_USERNAME=settings.mail.mail_username,
-    MAIL_PASSWORD=settings.mail.mail_password,
-    MAIL_FROM=settings.mail.mail_from,
-    MAIL_PORT=settings.mail.mail_port,
-    MAIL_SERVER=settings.mail.mail_server,
-    MAIL_FROM_NAME=settings.mail.mail_from_name,
-    MAIL_STARTTLS=settings.mail.mail_starttls,
-    MAIL_SSL_TLS=settings.mail.mail_ssl_tls,
-    USE_CREDENTIALS=settings.mail.mail_use_credentials,
-    VALIDATE_CERTS=settings.mail.mail_validate_certs,
+async def verify_email(email):
+    client = boto3.client(
+        'ses',
+        aws_access_key_id=settings.mail.aws_access_key_id,
+        aws_secret_access_key=settings.mail.aws_secret_access_key,
+        region_name=settings.mail.aws_default_region,
+        endpoint_url=settings.mail.localstack_endpoint
+    )
 
-    TEMPLATE_FOLDER=Path(Base_DIR, 'templates')
-)
+    try:
+        response = client.get_identity_verification_attributes(Identities=[email])
+        verification_status = response['VerificationAttributes'].get(email, {}).get('VerificationStatus')
 
-mail = FastMail(
-    config=mail_config
-)
+        if verification_status != 'Success':
+            response = await client.verify_email_identity(EmailAddress=email)
+            logging.info(f"Verification initiated for {email}: {response}")
+        else:
+            logging.info("Email already verified")
+
+    except ClientError as e:
+        logging.error(f"Failed to verify email: {e.response['Error']['Message']}")
+
+
+async def send_email(recipients: list, subject: str, body: str) -> None:
+    ses = boto3.client(
+        'ses',
+        region_name=settings.mail.aws_default_region,
+        endpoint_url=settings.mail.localstack_endpoint,
+        aws_access_key_id=settings.mail.aws_access_key_id,
+        aws_secret_access_key=settings.mail.aws_secret_access_key,
+    )
+
+    try:
+        await verify_email(settings.mail.mail_from)
+        response = ses.send_email(
+            Source=settings.mail.mail_from,
+            Destination={'ToAddresses': recipients},
+            Message={
+                'Subject': {
+                    'Data': subject,
+                    'Charset': 'UTF-8'
+                },
+                'Body': {
+                    'Html': {
+                        'Data': body,
+                        'Charset': 'UTF-8'
+                    }
+                }
+            }
+        )
+        logging.info(f"Email sent! Message ID: {response['MessageId']}")
+    except ClientError as e:
+        logging.error(f"Failed to send email: {e}")
+    finally:
+        ses.close()
 
 
 async def create_message(recipients: list[str], subject: str, body: str):

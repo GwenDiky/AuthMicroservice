@@ -1,14 +1,14 @@
 import logging
 from datetime import datetime
-from fastapi import Query
+
 import jwt
 from fastapi import APIRouter, Depends
 from fastapi import HTTPException
+from fastapi import Query
 from fastapi.security import (
     OAuth2PasswordBearer,
     OAuth2PasswordRequestForm
 )
-from typing import List
 from jwt import PyJWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,18 +23,23 @@ from auth.exceptions import (
     AuthFailedException,
     SignUpFailedException,
     PasswordNotChangedException,
-    ProfileNotChangedException, InvalidTokenException
+    ProfileNotChangedException,
+    InvalidTokenException,
+    UserAlreadyExists,
+    UserAlreadyVerified
 )
 from auth.models.core import get_async_session
 from auth.models.user_model import User
+from auth.schemas.page import ResponseSchema
 from auth.schemas.token import TokenSchema
 from auth.schemas.user import (
     UserCreateSchema,
     UserInDBSchema,
     UserUpdateSchema,
-    UserSchemaWithoutPassword
+    UserSchemaWithoutPassword,
 )
-from auth.services.email import mail, create_message
+from auth.services.email import create_message
+from auth.services.email import verify_email
 from auth.services.user import UserRepository
 from auth.utils.redis_client import add_token_to_blacklist, is_token_blacklisted, get_redis
 from auth.utils.utils_jwt import (
@@ -48,7 +53,6 @@ from auth.utils.utils_mail import (
 )
 from auth.utils.utils_users import compare_passwords
 from auth.utils.utils_users import hash_password
-from auth.schemas.page import PageResponse, ResponseSchema
 
 setup_logging()
 
@@ -67,10 +71,14 @@ async def signup(user: UserCreateSchema,
     user_data = user.model_dump()
     user_data['password'] = hashed_password
 
-    email = user_data["email"]
+    await verify_email(email)
 
     new_user = User(**user_data)
     try:
+        if await UserRepository(db).get_user_by_email(email):
+            logging.error(f"User with email {email} already in db")
+            raise UserAlreadyExists
+
         result = await UserRepository(db).add_new_user(new_user)
 
         if isinstance(result.date_of_birth, datetime):
@@ -88,24 +96,12 @@ async def signup(user: UserCreateSchema,
 async def resend_verification(email: str, db: AsyncSession = Depends(get_async_session)):
     user = await UserRepository(db).get_user_by_email(email)
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise AuthFailedException
 
     if user.is_verified:
-        raise HTTPException(status_code=400, detail="User is already verified")
+        raise UserAlreadyVerified
 
-    token = await create_urL_safe_token({"email": email})
-    link = f"http://{settings.domain}/api/user/verify/{token}"
-
-    html_message = templates.get_template("verify-email.html").render(link=link, username=user.username)
-
-    message = await create_message(
-        recipients=[email],
-        subject="Verify your email",
-        body=html_message
-    )
-
-    await mail.send_message(message)
-
+    await create_user_send_message(email=email)
     return {"message": "Verification email resent successfully"}
 
 
@@ -274,8 +270,7 @@ async def forgot_password(email: str,
 
 @user_router.delete("/me/delete")
 async def delete_me(token: str = Depends(oauth2_scheme),
-                    db: AsyncSession = Depends(get_async_session)) -> (
-        dict):
+                    db: AsyncSession = Depends(get_async_session)) -> dict:
     user = await get_current_auth_user(token, db)
 
     try:
@@ -284,19 +279,6 @@ async def delete_me(token: str = Depends(oauth2_scheme),
     except PyJWTError:
         raise AuthFailedException
 
-
-
-async def user_to_response(user: User) -> UserInDBSchema:
-    return UserInDBSchema(
-        id = user.get("id"),
-        username = user.get("username"),
-        password = user.get("password"),
-        email = user.get("email"),
-        created_at = user.get("created_at"),
-        date_of_birth = user.get("date_of_birth"),
-        phone_number = user.get("phone_number"),
-        is_superuser = user.get("is_superuser"),
-    )
 
 @user_router.get("/get-all-users", response_model=ResponseSchema, response_model_exclude_none=True)
 async def get_all_person(

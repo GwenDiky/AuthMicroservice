@@ -14,10 +14,14 @@ class MailSettings(BaseSettings):
     mail_port: int = Field(validation_alias="MAIL_PORT")
     mail_server: str = Field(validation_alias="MAIL_SERVER")
     mail_from_name: str = Field(validation_alias="MAIL_FROM_NAME")
+    localstack_endpoint: str = Field(validation_alias="LOCALSTACK_ENDPOINT")
     mail_ssl_tls: bool = False
     mail_starttls: bool = True
     mail_use_credentials: bool = True
     mail_validate_certs: bool = True
+    aws_default_region:str = Field(validation_alias="AWS_DEFAULT_REGION")
+    aws_access_key_id:str = Field(validation_alias="AWS_ACCESS_KEY_ID")
+    aws_secret_access_key:str = Field(validation_alias="AWS_SECRET_ACCESS_KEY")
 
 
 class DbSettings(BaseSettings):

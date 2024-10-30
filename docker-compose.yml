@@ -67,8 +67,10 @@ services:
   localstack:
     image: localstack/localstack
     environment:
-      - SERVICES=ses
+      - SERVICES=ses,s3
       - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=authmicro
+      - AWS_SECRET_ACCESS_KEY=authmicro
     ports:
       - "4566:4566"
       - "4571:4571"

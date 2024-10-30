@@ -87,3 +87,20 @@ class BadRequestException(HTTPException, SQLAlchemyError):
             detail=detail if detail else "Bad request",
         )
         SQLAlchemyError.__init__(self)
+
+class UserAlreadyExists(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User with such email already exists. Try to log in.",
+            headers=headers,
+        )
+
+
+class UserAlreadyVerified(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account is already verified.",
+            headers=headers,
+        )

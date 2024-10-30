@@ -2,7 +2,7 @@ from fastapi import APIRouter
 
 from auth.core.config import setup_logging
 from auth.schemas.email import EmailSchema
-from auth.services.email import mail, create_message
+from auth.services.email import create_message, send_email as send_email_service
 
 setup_logging()
 
@@ -20,7 +20,7 @@ async def send_mail(emails: EmailSchema):
         body=html
     )
 
-    await mail.send_message(message)
+    await send_email_service(message)
 
     return {"message": "Email sent successfully"}
 
