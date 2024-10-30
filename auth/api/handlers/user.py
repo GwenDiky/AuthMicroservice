@@ -71,19 +71,21 @@ async def signup(user: UserCreateSchema,
     user_data = user.model_dump()
     user_data['password'] = hashed_password
 
-    await verify_email(email)
+    email = user_data['email']
+
+    # await verify_email(email)
 
     new_user = User(**user_data)
     try:
-        if await UserRepository(db).get_user_by_email(email):
-            logging.error(f"User with email {email} already in db")
-            raise UserAlreadyExists
+        # if await UserRepository(db).get_user_by_email(email):
+        #     logging.error(f"User with email {email} already in db")
+        #     raise UserAlreadyExists
 
         result = await UserRepository(db).add_new_user(new_user)
 
         if isinstance(result.date_of_birth, datetime):
             result.date_of_birth = result.date_of_birth.date()
-        await create_user_send_message(email=email)
+        # await create_user_send_message(email=email)
 
     except SignUpFailedException:
         logging.error("User creation failed")
@@ -101,6 +103,7 @@ async def resend_verification(email: str, db: AsyncSession = Depends(get_async_s
     if user.is_verified:
         raise UserAlreadyVerified
 
+    await verify_email(email=email)
     await create_user_send_message(email=email)
     return {"message": "Verification email resent successfully"}
 
@@ -225,12 +228,12 @@ async def update_profile_of_current_user(user: UserUpdateSchema,
 @user_router.get('/verify/{token}')
 async def verify_user_account(token: str,
                               db: AsyncSession = Depends(get_async_session)):
-    token_data = await decode_url_safe_token(token)
-    user_email = token_data.get('email')
-
-    user = await UserRepository(db).get_user_by_email(user_email)
-    if not user:
-        raise UserNotFoundException
+    # token_data = await decode_url_safe_token(token)
+    # user_email = token_data.get('email')
+    # #
+    # user = await UserRepository(db).get_user_by_email(user_email)
+    # if not user:
+    #     raise UserNotFoundException
 
     await UserRepository(db).update_status_of_email_verification(user, {'is_verified': True})
     return \
