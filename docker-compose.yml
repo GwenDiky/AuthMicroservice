@@ -4,7 +4,6 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: "auth-auth"
-#    restart: always
     volumes:
       - .:/app
     ports:
@@ -18,6 +17,7 @@ services:
     depends_on:
       - pgdb
       - redis
+      - localstack
   pgdb:
     image: postgres:bullseye
     restart: always
@@ -72,13 +72,15 @@ services:
       - AWS_ACCESS_KEY_ID=authmicro
       - AWS_SECRET_ACCESS_KEY=authmicro
       - DEBUG=1
+      - PERSISTENCE=1
     ports:
       - "4566:4566"
-      - "4571:4571"
     volumes:
       - "./localstack:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
 
 
 volumes:
   postgres-data:
   redis-data:
+  localstack-data:

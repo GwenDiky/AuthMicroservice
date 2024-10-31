@@ -18,7 +18,6 @@ from auth.api.dependecies import (
 )
 from auth.core.config import settings
 from auth.core.config import setup_logging
-from auth.core.config import templates
 from auth.exceptions import (
     AuthFailedException,
     SignUpFailedException,
@@ -39,7 +38,7 @@ from auth.schemas.user import (
     UserSchemaWithoutPassword,
 )
 from auth.services.email import create_message
-from auth.services.email import verify_email
+from auth.services.email import verify_email, is_email_verified, send_email
 from auth.services.user import UserRepository
 from auth.utils.redis_client import add_token_to_blacklist, is_token_blacklisted, get_redis
 from auth.utils.utils_jwt import (
@@ -53,6 +52,7 @@ from auth.utils.utils_mail import (
 )
 from auth.utils.utils_users import compare_passwords
 from auth.utils.utils_users import hash_password
+from auth.core.config import templates
 
 setup_logging()
 
@@ -72,20 +72,15 @@ async def signup(user: UserCreateSchema,
     user_data['password'] = hashed_password
 
     email = user_data['email']
-
-    # await verify_email(email)
+    await verify_email(email)
 
     new_user = User(**user_data)
     try:
-        # if await UserRepository(db).get_user_by_email(email):
-        #     logging.error(f"User with email {email} already in db")
-        #     raise UserAlreadyExists
-
         result = await UserRepository(db).add_new_user(new_user)
 
         if isinstance(result.date_of_birth, datetime):
             result.date_of_birth = result.date_of_birth.date()
-        # await create_user_send_message(email=email)
+        await create_user_send_message(email)
 
     except SignUpFailedException:
         logging.error("User creation failed")
@@ -104,7 +99,11 @@ async def resend_verification(email: str, db: AsyncSession = Depends(get_async_s
         raise UserAlreadyVerified
 
     await verify_email(email=email)
-    await create_user_send_message(email=email)
+
+    if not await is_email_verified(email):
+        raise Exception("Recipient email is not verified. Please verify the email first.")
+
+    await create_user_send_message(email)
     return {"message": "Verification email resent successfully"}
 
 
@@ -228,12 +227,12 @@ async def update_profile_of_current_user(user: UserUpdateSchema,
 @user_router.get('/verify/{token}')
 async def verify_user_account(token: str,
                               db: AsyncSession = Depends(get_async_session)):
-    # token_data = await decode_url_safe_token(token)
-    # user_email = token_data.get('email')
-    # #
-    # user = await UserRepository(db).get_user_by_email(user_email)
-    # if not user:
-    #     raise UserNotFoundException
+    token_data = await decode_url_safe_token(token)
+    user_email = token_data.get('email')
+    #
+    user = await UserRepository(db).get_user_by_email(user_email)
+    if not user:
+        raise UserNotFoundException
 
     await UserRepository(db).update_status_of_email_verification(user, {'is_verified': True})
     return \
