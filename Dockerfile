@@ -17,7 +17,8 @@ RUN poetry install --no-root
 COPY docker-aws-entrypoint.sh ./
 RUN chmod +x docker-aws-entrypoint.sh
 
+COPY docker-entrypoint.sh ./
 
 COPY . .
 
-CMD ["uvicorn", "auth.main:app", "--host", "0.0.0.0", "--port", "8083", "--reload"]
+ENTRYPOINT ["./docker-entrypoint.sh"]
