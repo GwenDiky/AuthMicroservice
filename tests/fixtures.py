@@ -2,7 +2,9 @@ import httpx
 import pytest
 import pytest_asyncio
 from sqlalchemy import event
-from auth.models.core import AsyncSession, clear_db, engine
+from auth.models.core import AsyncSession, clear_db, engine, sessionLocalAsync
+from auth.schemas.user import UserInDBSchema, UserCreateSchema
+from auth.services.user import UserRepository
 
 
 @pytest.fixture
@@ -11,10 +13,9 @@ async def api_client():
     async with httpx.AsyncClient(app=app, base_url='http://test') as client:
         yield client
 
-
-@pytest_asyncio.fixture(autouse=True)
+@pytest_asyncio.fixture()
 async def db_session():
-    async with AsyncSession() as session:
+    async with sessionLocalAsync() as session:
         yield session
 
 
@@ -23,24 +24,23 @@ async def db(db_session):
     await clear_db()
     yield db_session
 
+@pytest_asyncio.fixture
+async def user_repo(db_session):
+    repo = UserRepository(db_session)
+    async def mock_add_new_user(user_data):
+        return UserInDBSchema(
+            email=user_data.email,
+            date_of_birth=user_data.date_of_birth,
+            username=user_data.username,
+            is_verified=False
+        )
+    repo.add_new_user = mock_add_new_user
+    return repo
 
-@pytest_asyncio.fixture(scope="function")
-async def async_db_session():
-    connection = await engine.connect()
-    transaction = await connection.begin()
-    async_session = AsyncSession(bind=connection)
-    nested = await connection.begin_nested()
-
-    @event.listens_for(async_session.sync_session, "after_transaction_end")
-    def end_savepoint(session, transaction):
-        nonlocal nested
-
-        if not nested.is_active:
-            nested = connection.sync_connection.begin_nested()
-
-    try:
-        yield async_session
-    finally:
-        await transaction.rollback()
-        await async_session.close()
-        await connection.close()
+@pytest_asyncio.fixture
+async def user_create_schema():
+    return UserCreateSchema(
+        username="testuser",
+        email="test@example.com",
+        password="securepassword"
+    )

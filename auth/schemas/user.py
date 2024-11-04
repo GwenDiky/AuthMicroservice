@@ -1,9 +1,10 @@
 from datetime import date, datetime
-from typing import Annotated, Optional
+from typing import Optional, Annotated
 from uuid import UUID, uuid4
 
-from annotated_types import MaxLen, MinLen
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from annotated_types import MinLen, MaxLen
+from pydantic import (
+    BaseModel, EmailStr, ConfigDict, Field)
 from pydantic_extra_types.phone_numbers import PhoneNumber
 
 
@@ -52,14 +53,13 @@ class UserInDBSchema(BaseModel):
     phone_number: Optional[PhoneNumber]
     is_superuser: bool = False
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserUpdateSchema(BaseModel):
     username: Optional[str] = None
     email: Optional[EmailStr] = None
-    date_of_birth: Optional[date] = None
+    date_of_birth: Optional[datetime] = None
     phone_number: Optional[PhoneNumber] = None
 
 
