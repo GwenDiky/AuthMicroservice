@@ -37,10 +37,10 @@ class UserCreateSchema(BaseModel):
     username: Annotated[str, MinLen(3), MaxLen(50)]
     password: str
 
-    phone_number: Optional[PhoneNumber] = None
+    phone_number: Optional[PhoneNumber]
     email: Optional[EmailStr]
 
-    date_of_birth: Optional[date] = None
+    date_of_birth: Optional[date]
 
 
 class UserInDBSchema(BaseModel):
@@ -49,7 +49,7 @@ class UserInDBSchema(BaseModel):
     password: str
     email: Optional[EmailStr]
     created_at: datetime
-    date_of_birth: date
+    date_of_birth: Optional[date]
     phone_number: Optional[PhoneNumber]
     is_superuser: bool = False
 

@@ -42,7 +42,7 @@ class UserRepository(SqlAlchemyRepository):
             model=self.model, obj_data=user_data
         )
 
-    async def delete_user_obj(self, id: int):
+    async def delete_user(self, id: int):
         return await super().delete_obj(model=self.model, id=id)
 
     async def update_profile_of_current_user(self, id: int,

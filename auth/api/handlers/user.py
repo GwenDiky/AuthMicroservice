@@ -29,7 +29,7 @@ async def signup(
 ) -> user.UserInDBSchema:
     user.password = await utils_users.hash_password(user.password)
 
-    await verify_email(email)
+    await verify_email(user.email)
 
     new_user = User(**user.model_dump())
     try:
