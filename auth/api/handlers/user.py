@@ -250,7 +250,7 @@ async def delete_me(
 
 
 @user_router.get(
-    "/users", response_model=paginator_schema.PaginationSchema,
+    "/get-all-users", response_model=paginator_schema.PaginationSchema,
 response_model_exclude_none=True
 )
 async def get_users(
