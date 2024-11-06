@@ -9,16 +9,14 @@ from auth.exceptions import InvalidTokenException
 
 
 async def token_response(token: str):
-    return {
-        "access_token": token
-    }
+    return {"access_token": token}
 
 
 async def encode_jwt(
-        payload: dict,
-        algorithm: str = settings.jwt.jwt_algorithm,
-        secret: str = settings.jwt.jwt_secret,
-        expire_timedelta: timedelta | None = None
+    payload: dict,
+    algorithm: str = settings.jwt.jwt_algorithm,
+    secret: str = settings.jwt.jwt_secret,
+    expire_timedelta: timedelta | None = None,
 ) -> Dict[str, str]:
     if expire_timedelta is None:
         expire_timedelta = timedelta(minutes=settings.jwt.access_token_expire_minutes)
@@ -37,9 +35,9 @@ async def encode_jwt(
 
 
 async def decode_jwt(
-        token: str,
-        algorithm: str = settings.jwt.jwt_algorithm,
-        secret: str = settings.jwt.jwt_secret,
+    token: str,
+    algorithm: str = settings.jwt.jwt_algorithm,
+    secret: str = settings.jwt.jwt_secret,
 ) -> dict:
     try:
         decoded_token = jwt.decode(token, secret, algorithms=[algorithm])

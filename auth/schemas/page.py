@@ -7,6 +7,7 @@ class ResponseSchema(BaseModel):
     detail: str
     result: Any
 
+
 class PageResponse(BaseModel):
     page_number: int
     page_size: int

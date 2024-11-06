@@ -1,22 +1,16 @@
-from sqlalchemy.ext.asyncio import (
-    AsyncSession, create_async_engine, async_sessionmaker
-)
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 
 from auth.core.base import Base
 from auth.core.config import settings
 
-engine = create_async_engine(
-    settings.db.db_url,
-    echo=True
-
-)
+engine = create_async_engine(settings.db.db_url, echo=True)
 
 sessionLocalAsync = async_sessionmaker(
     bind=engine,
     autoflush=False,
     autocommit=False,
     class_=AsyncSession,
-    expire_on_commit=False
+    expire_on_commit=False,
 )
 
 

@@ -11,10 +11,11 @@ from auth.schemas.user import UserInDBSchema
 
 setup_logging()
 
+
 async def get_current_auth_user(token: str, db: AsyncSession) -> UserCreateSchema:
     try:
         payload = await decode_jwt(token)
-        username = payload.get('username')
+        username = payload.get("username")
         if username is None:
             raise AuthFailedException
 
@@ -28,8 +29,9 @@ async def get_current_auth_user(token: str, db: AsyncSession) -> UserCreateSchem
         raise AuthFailedException
 
 
-async def get_info_of_user_by_token(token: TokenSchema, db: AsyncSession) \
-        -> UserInDBSchema:
+async def get_info_of_user_by_token(
+    token: TokenSchema, db: AsyncSession
+) -> UserInDBSchema:
     token_credentials = token.access_token
     payload = await decode_jwt(token_credentials)
 

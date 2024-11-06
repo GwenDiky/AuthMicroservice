@@ -17,15 +17,18 @@ def test_user():
         "role": "User_without_permissions",
         "date_of_birth": str(date(2005, 8, 20)),
         "phone": "tel:+375291118957",
-        "email": "user@example.com"
+        "email": "user@example.com",
     }
 
 
-@pytest.mark.parametrize("username, role, email", [
-    ("violetta", "User_without_permissions", "user@example.com"),
-    ("john_doe", "Admin", "admin@example.com"),
-    ("alice", "User_without_permissions", "alice@example.com"),
-])
+@pytest.mark.parametrize(
+    "username, role, email",
+    [
+        ("violetta", "User_without_permissions", "user@example.com"),
+        ("john_doe", "Admin", "admin@example.com"),
+        ("alice", "User_without_permissions", "alice@example.com"),
+    ],
+)
 def test_create_user_parametrized(username, role, email):
     user_data = {
         "id": str(uuid4()),
@@ -34,7 +37,7 @@ def test_create_user_parametrized(username, role, email):
         "role": role,
         "date_of_birth": str(date(1995, 5, 15)),
         "phone": "tel:+375292188397",
-        "email": email
+        "email": email,
     }
 
     response = client.post(f"/users/{user_data['id']}", json=user_data)
@@ -47,7 +50,7 @@ def test_create_user_parametrized(username, role, email):
 
 @patch("main.jsonable_encoder")
 def test_create_user_with_mock(mock_jsonable_encoder, test_user):
-    test_user['phone'] = 'tel:+375-29-111-89-57'
+    test_user["phone"] = "tel:+375-29-111-89-57"
 
     mock_jsonable_encoder.return_value = test_user
 
@@ -56,4 +59,3 @@ def test_create_user_with_mock(mock_jsonable_encoder, test_user):
 
     assert response.status_code == 200
     assert response.json() == test_user
-

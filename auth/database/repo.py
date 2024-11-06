@@ -2,20 +2,16 @@ import logging
 from auth.core.config import setup_logging
 from abc import ABC, abstractmethod
 
-from sqlalchemy import (
-    select, text, or_
-)
+from sqlalchemy import select, text, or_
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.ext.asyncio import (
-    AsyncSession
-)
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.core.base import Base
 from auth.models.user_model import User
 from auth.exceptions import (
     BadRequestException,
     UserNotFoundException,
-    SignUpFailedException
+    SignUpFailedException,
 )
 from sqlalchemy import func
 import math
@@ -42,7 +38,9 @@ class AbstractRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def update_status_of_email_verification(self, user: User, user_data: dict) -> User:
+    async def update_status_of_email_verification(
+        self, user: User, user_data: dict
+    ) -> User:
         raise NotImplementedError
 
     @abstractmethod
@@ -96,8 +94,7 @@ class SqlAlchemyRepository(AbstractRepository):
             raise BadRequestException(f"Database error: {db_error}")
         return {"result": "Object was deleted"}
 
-    async def update_current_obj(self, model: Base,
-                                 obj_data: dict):
+    async def update_current_obj(self, model: Base, obj_data: dict):
         try:
             for k, v in obj_data.items():
                 setattr(model, k, v)
@@ -111,7 +108,9 @@ class SqlAlchemyRepository(AbstractRepository):
             raise BadRequestException(f"Database error: {db_error}")
         return {"result": "user was updated succesfully"}
 
-    async def update_status_of_email_verification(self, model: Base, obj_data: dict) -> User:
+    async def update_status_of_email_verification(
+        self, model: Base, obj_data: dict
+    ) -> User:
         try:
             for k, v in obj_data.items():
                 setattr(model, k, v)
@@ -127,16 +126,21 @@ class SqlAlchemyRepository(AbstractRepository):
         return model
 
     async def get_all(
-            self, model: Base, page: int = 1,
-            limit: int = 10, sort: str = None,
-            filter: str = None,
+        self,
+        model: Base,
+        page: int = 1,
+        limit: int = 10,
+        sort: str = None,
+        filter: str = None,
     ):
         query = select(model)
         if filter is not None and filter != "null":
             try:
-                criteria = dict(x.split("*") for x in filter.split('-'))
+                criteria = dict(x.split("*") for x in filter.split("-"))
             except ValueError:
-                raise ValueError("Filter format is incorrect. Ensure it is in the format 'key*value-key*value'.")
+                raise ValueError(
+                    "Filter format is incorrect. Ensure it is in the format 'key*value-key*value'."
+                )
 
             criteria_list = []
             for attr, value in criteria.items():
@@ -172,18 +176,16 @@ class SqlAlchemyRepository(AbstractRepository):
             page_size=limit,
             total_pages=total_page,
             total_record=total_record,
-            content=result_list
+            content=result_list,
         )
 
     @staticmethod
     def convert_sort(sort):
-        return ','.join(sort.split('-'))
+        return ",".join(sort.split("-"))
 
     @staticmethod
     def convert_columns(model, columns):
         if columns is None or columns == "all":
             return [model]
         else:
-            return [getattr(model, col.strip()) for col in columns.split('-')]
-
-
+            return [getattr(model, col.strip()) for col in columns.split("-")]

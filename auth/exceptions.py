@@ -11,7 +11,7 @@ class PasswordNotChangedException(HTTPException):
         super().__init__(
             status_code=status.HTTP_417_EXPECTATION_FAILED,
             detail="Password wasn't changed",
-            headers=headers
+            headers=headers,
         )
 
 
@@ -20,7 +20,7 @@ class ProfileNotChangedException(HTTPException):
         super().__init__(
             status_code=status.HTTP_417_EXPECTATION_FAILED,
             detail="Profile wasn't changed",
-            headers=headers
+            headers=headers,
         )
 
 
@@ -29,7 +29,7 @@ class UserNotFoundException(HTTPException):
         super().__init__(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User wasn't found. Check up your credentials",
-            headers=headers
+            headers=headers,
         )
 
 
@@ -87,6 +87,7 @@ class BadRequestException(HTTPException, SQLAlchemyError):
             detail=detail if detail else "Bad request",
         )
         SQLAlchemyError.__init__(self)
+
 
 class UserAlreadyExists(HTTPException):
     def __init__(self) -> None:

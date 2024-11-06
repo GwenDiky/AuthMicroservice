@@ -15,9 +15,7 @@ serializer = URLSafeTimedSerializer(
 )
 
 
-async def create_urL_safe_token(
-        data: dict
-):
+async def create_urL_safe_token(data: dict):
     token = serializer.dumps(data)
     return token
 
@@ -35,16 +33,20 @@ async def forgot_password_send_message(email: str, new_password: str) -> None:
     link = f"http://{settings.domain}/api/user/reset-password/verify/{token}/{new_password}"
     html_body = templates.get_template("forgot-password.html").render(link=link)
     await send_email(
-        recipients=[email], subject="Verify your email", body="Verify your email", html_body=html_body
+        recipients=[email],
+        subject="Verify your email",
+        body="Verify your email",
+        html_body=html_body,
     )
 
+
 async def create_user_send_message(email: str) -> None:
-    token = await create_urL_safe_token(
-        {"email": email}
-    )
+    token = await create_urL_safe_token({"email": email})
     link = f"http://{settings.domain}/api/user/verify/{token}"
     html_body = templates.get_template("verify-email.html").render(link=link)
     await send_email(
-        recipients=[email], subject="Verification Email", body="Verify your email", html_body=html_body
+        recipients=[email],
+        subject="Verification Email",
+        body="Verify your email",
+        html_body=html_body,
     )
-

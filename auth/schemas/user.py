@@ -3,14 +3,12 @@ from typing import Optional, Annotated
 from uuid import UUID, uuid4
 
 from annotated_types import MinLen, MaxLen
-from pydantic import (
-    BaseModel, EmailStr, ConfigDict, Field)
+from pydantic import BaseModel, EmailStr, ConfigDict, Field
 from pydantic_extra_types.phone_numbers import PhoneNumber
 
 
 class UserSchema(BaseModel):
-    model_config = ConfigDict(
-        strict=True)
+    model_config = ConfigDict(strict=True)
 
     id: UUID = Field(default_factory=uuid4)
     username: str
@@ -22,6 +20,7 @@ class UserSchema(BaseModel):
     email: EmailStr
     password: str
     is_verified: bool = Field(default=False)
+
 
 class UserSchemaWithoutPassword(BaseModel):
     id: int
@@ -63,4 +62,3 @@ class UserUpdateSchema(BaseModel):
     email: Optional[EmailStr] = None
     date_of_birth: Optional[date] = None
     phone_number: Optional[PhoneNumber] = None
-
