@@ -14,11 +14,12 @@ WORKDIR /app
 COPY pyproject.toml poetry.lock ./
 RUN poetry install --no-root
 
+
 COPY docker-aws-entrypoint.sh ./
-RUN chmod +x docker-aws-entrypoint.sh
 
 COPY docker-entrypoint.sh ./
 
 COPY . .
 
+RUN chmod +x ./docker-aws-entrypoint.sh ./docker-entrypoint.sh
 ENTRYPOINT ["./docker-entrypoint.sh"]

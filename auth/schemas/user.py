@@ -28,7 +28,6 @@ class UserSchemaWithoutPassword(BaseModel):
     username: str
     created_at: date = Field(default_factory=date.today)
     is_superuser: bool = False
-    # avatar:
     date_of_birth: Optional[date]
     phone_number: Optional[PhoneNumber] = None
     email: EmailStr

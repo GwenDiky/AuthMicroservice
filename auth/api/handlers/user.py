@@ -1,9 +1,7 @@
 import logging
-from datetime import datetime
 
 import jwt
 from fastapi import APIRouter, Depends
-from fastapi import HTTPException
 from fastapi import Query
 from fastapi.security import (
     OAuth2PasswordBearer,
@@ -24,7 +22,6 @@ from auth.exceptions import (
     PasswordNotChangedException,
     ProfileNotChangedException,
     InvalidTokenException,
-    UserAlreadyExists,
     UserAlreadyVerified
 )
 from auth.models.core import get_async_session
@@ -37,22 +34,19 @@ from auth.schemas.user import (
     UserUpdateSchema,
     UserSchemaWithoutPassword,
 )
-from auth.services.email import create_message
-from auth.services.email import verify_email, is_email_verified, send_email
+from auth.services.email import verify_email, is_email_verified
 from auth.services.user import UserRepository
 from auth.utils.redis_client import add_token_to_blacklist, is_token_blacklisted, get_redis
 from auth.utils.utils_jwt import (
     encode_jwt
 )
 from auth.utils.utils_mail import (
-    create_urL_safe_token,
     decode_url_safe_token,
     forgot_password_send_message,
     create_user_send_message
 )
 from auth.utils.utils_users import compare_passwords
 from auth.utils.utils_users import hash_password
-from auth.core.config import templates
 
 setup_logging()
 
@@ -289,15 +283,15 @@ async def get_all_person(
     user_schema = []
     for user in users:
         user_schema.append(UserSchemaWithoutPassword(
-                id = user.id,
-                username = user.username,
-                created_at = user.created_at,
-                is_superuser = user.is_superuser,
-                date_of_birth = user.date_of_birth,
-                phone_number = user.phone_number,
-                email = user.email,
-                is_verified = user.is_verified
-            ))
+            id=user.id,
+            username=user.username,
+            created_at=user.created_at,
+            is_superuser=user.is_superuser,
+            date_of_birth=user.date_of_birth,
+            phone_number=user.phone_number,
+            email=user.email,
+            is_verified=user.is_verified
+        ))
 
     return ResponseSchema(
         detail="Successfully fetched user's data!",
