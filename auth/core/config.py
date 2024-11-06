@@ -7,40 +7,42 @@ from pydantic import Field
 from pydantic_settings import BaseSettings
 from fastapi.templating import Jinja2Templates
 
+
 class MailSettings(BaseSettings):
-    mail_username: str = Field(validation_alias="MAIL_USERNAME")
-    mail_password: str = Field(validation_alias="MAIL_PASSWORD")
-    mail_from: str = Field(validation_alias="MAIL_FROM")
-    mail_port: int = Field(validation_alias="MAIL_PORT")
-    mail_server: str = Field(validation_alias="MAIL_SERVER")
-    mail_from_name: str = Field(validation_alias="MAIL_FROM_NAME")
-    localstack_endpoint: str = Field(validation_alias="LOCALSTACK_ENDPOINT")
+    mail_username: str
+    mail_password: str
+    mail_from: str
+    mail_port: int
+    mail_server: str
+    mail_from_name: str
+    localstack_endpoint: str
     mail_ssl_tls: bool = False
     mail_starttls: bool = True
     mail_use_credentials: bool = True
     mail_validate_certs: bool = True
-    aws_default_region:str = Field(validation_alias="AWS_DEFAULT_REGION")
-    aws_access_key_id:str = Field(validation_alias="AWS_ACCESS_KEY_ID")
-    aws_secret_access_key:str = Field(validation_alias="AWS_SECRET_ACCESS_KEY")
+    aws_default_region: str
+    aws_access_key_id: str
+    aws_secret_access_key: str
 
 
 class DbSettings(BaseSettings):
-    db_url: str = Field(validation_alias="SQLALCHEMY_DATABASE_URL")
-    db_user: str = Field(validation_alias="DB_USER")
-    db_password: str = Field(validation_alias="DB_PASSWORD")
-    db_name: str = Field(validation_alias="DB_NAME")
+    db_url: str
+    db_user: str
+    db_password: str
+    db_name: str
 
 
 class JWTSettings(BaseSettings):
-    jwt_secret: str = Field(validation_alias="JWT_SECRET")
-    jwt_algorithm: str = Field(validation_alias="JWT_ALGORITHM")
-    access_token_expire_minutes: int = Field(validation_alias="ACCESS_TOKEN_EXPIRE_MINUTES")
+    jwt_secret: str
+    jwt_algorithm: str
+    access_token_expire_minutes: int
 
 
 class RedisSettings(BaseSettings):
-    redis_url: str = Field(validation_alias="REDIS_URL")
-    redis_port: str = Field(validation_alias="REDIS_PORT")
-    redis_password: str = Field(validation_alias="REDIS_PASSWORD")
+    redis_url: str
+    redis_port: str
+    redis_password: str
+
 
 class Settings(BaseSettings):
     db: DbSettings = DbSettings()
@@ -48,7 +50,7 @@ class Settings(BaseSettings):
     mail: MailSettings = MailSettings()
     redis: RedisSettings = RedisSettings()
 
-    domain: str = Field(validation_alias="DOMAIN")
+    domain: str
 
 
 def setup_logging():
@@ -59,6 +61,7 @@ def setup_logging():
             logging.StreamHandler()
         ]
     )
+
 
 templates = Jinja2Templates(directory="templates")
 
