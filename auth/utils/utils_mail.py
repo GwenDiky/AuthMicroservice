@@ -5,7 +5,6 @@ from itsdangerous import URLSafeTimedSerializer
 from auth.core.config import settings
 from auth.exceptions import InvalidTokenException
 from auth.core.config import templates
-# import aioboto3
 from auth.services.email import send_email
 import boto3
 

@@ -66,20 +66,14 @@ TOKEN_TYPE = "Bearer"
 async def signup(user: UserCreateSchema,
                  db: AsyncSession = Depends(get_async_session)) \
         -> UserInDBSchema:
-    hashed_password = await hash_password(user.password)
+    user.password = await hash_password(user.password)
 
-    user_data = user.model_dump()
-    user_data['password'] = hashed_password
-
-    email = user_data['email']
+    email = user.email
     await verify_email(email)
 
-    new_user = User(**user_data)
+    new_user = User(**user.model_dump())
     try:
         result = await UserRepository(db).add_new_user(new_user)
-
-        if isinstance(result.date_of_birth, datetime):
-            result.date_of_birth = result.date_of_birth.date()
         await create_user_send_message(email)
 
     except SignUpFailedException:

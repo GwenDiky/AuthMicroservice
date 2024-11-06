@@ -11,21 +11,6 @@ from auth.schemas.user import UserInDBSchema
 
 setup_logging()
 
-
-class PermissionChecker:
-    def __init__(self, permission: str):
-        self.permission = permission
-
-    # def __call__(self, user_id=Depends(get_user_id)):
-    #     has_permission = ...
-    #
-    #     if not has_permission:
-    #         raise HTTPException(
-    #             status_code=status.HTTP_403_FORBIDDEN,
-    #             detail='Insufficient permissions'
-    #         )
-
-
 async def get_current_auth_user(token: str, db: AsyncSession) -> UserCreateSchema:
     try:
         payload = await decode_jwt(token)
