@@ -60,7 +60,6 @@ def setup_logging():
         handlers=[logging.StreamHandler()],
     )
 
-
 templates = Jinja2Templates(directory="templates")
 
 settings = Settings()
