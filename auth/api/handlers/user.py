@@ -1,4 +1,5 @@
 import logging
+from typing import Type
 
 import jwt
 from fastapi import APIRouter, Depends, Query
@@ -21,7 +22,8 @@ from auth.schemas.email import EmailResponseSchema
 from auth.schemas.page import ResponseSchema
 from auth.schemas.token import TokenSchema
 from auth.schemas.user import (UserCreateSchema, UserInDBSchema,
-                               UserSchemaWithoutPassword, UserUpdateSchema)
+                               UserSchemaWithoutPassword, UserUpdateSchema,
+                               MessageSchema)
 from auth.services.email import is_email_verified, verify_email
 from auth.services.user import UserRepository
 from auth.utils.redis_client import (add_token_to_blacklist, get_redis,
@@ -148,7 +150,7 @@ async def get_info_by_token(
 @user_router.post("/logout")
 async def logout(
     token: str = Depends(oauth2_scheme), redis_client=Depends(get_redis)
-) -> dict:
+) -> MessageSchema:
     logging.info(f"Current token: {token}")
 
     if not token:
@@ -156,7 +158,9 @@ async def logout(
         raise InvalidTokenException
 
     await add_token_to_blacklist(token, redis_client)
-    return {"message": "Successfully logged out"}
+    return MessageSchema(
+        "Successfully logged out!"
+    )
 
 
 @user_router.put("/change-password")
@@ -222,13 +226,14 @@ async def verify_user_account(
     await UserRepository(db).update_status_of_email_verification(
         user, {"is_verified": True}
     )
-    return {"result": f"U'r account '{user.username}' verified successfully!"}
+    return EmailResponseSchema(
+        f"U'r account '{self.username}' verified successfully!"
+    )
 
 
 @user_router.get("/reset-password/verify/{token}/{new_password}")
 async def verify_user_account_password_forgot(
-    token: str, new_password: str,
-    db: AsyncSession = Depends(get_async_session)
+    token: str, new_password: str, db: AsyncSession = Depends(get_async_session)
 ):
     token_data = await decode_url_safe_token(token)
     user_email = token_data.get("email")
@@ -238,23 +243,22 @@ async def verify_user_account_password_forgot(
         raise UserNotFoundException
 
     hashed_password = await hash_password(new_password)
-    await UserRepository(db).change_password_of_current_user(
-        user.id, hashed_password
-    )
+    await UserRepository(db).change_password_of_current_user(user.id, hashed_password)
 
-    return {"new_password": user.password}
+    return UserPasswordChangedSchema(
+        "Password was changed successfully for current user!"
+    )
 
 
 @user_router.post("/forgot-password")
 async def forgot_password(email: str, new_password: str) -> dict:
     await forgot_password_send_message(email, new_password)
-    return {"comments": f"Check up u'r mail: {email}"}
+    return EmailResponseSchema(f"Check up u'r mail: {email}")
 
 
 @user_router.delete("/me/delete")
 async def delete_me(
-    token: str = Depends(oauth2_scheme),
-    db: AsyncSession = Depends(get_async_session)
+    token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_async_session)
 ) -> dict:
     user = await get_current_auth_user(token, db)
 
@@ -266,9 +270,7 @@ async def delete_me(
 
 
 @user_router.get(
-    "/get-all-users",
-    response_model=ResponseSchema,
-    response_model_exclude_none=True
+    "/get-all-users", response_model=ResponseSchema, response_model_exclude_none=True
 )
 async def get_all_person(
     page: int = 1,

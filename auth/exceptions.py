@@ -120,7 +120,6 @@ class MailNotVerifiedException(HTTPException):
     def __init__(self) -> None:
         super().__init__(
             status_code=status.HTTP_417_EXPECTATION_FAILED,
-            detail="Recipient email is not verified. "
-                   "Please verify the email first.",
+            detail="Recipient email is not verified. " "Please verify the email first.",
             headers=headers,
         )

@@ -24,11 +24,7 @@ async def is_email_verified(email: str) -> bool:
             Identities=[email],
         )
         verification_status = (
-            response[
-                "VerificationAttributes"
-            ].get(email, {}).get(
-                "VerificationStatus"
-            )
+            response["VerificationAttributes"].get(email, {}).get("VerificationStatus")
         )
         return verification_status == "Success"
 
@@ -48,8 +44,7 @@ async def verify_email(email):
             raise MailVerificationFailedException
 
 
-async def send_email(recipients: list, subject: str,
-                     body: str, html_body: str) -> None:
+async def send_email(recipients: list, subject: str, body: str, html_body: str) -> None:
     async with aioboto3.Session().client(
         "ses",
         region_name=settings.mail.aws_default_region,
