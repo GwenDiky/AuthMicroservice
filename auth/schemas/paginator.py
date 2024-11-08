@@ -19,3 +19,11 @@ class Paginator(BaseModel):
 
         query = query.offset((self.page - 1) * self.limit).limit(self.limit)
         return query
+
+
+class PaginationSchema(BaseModel):
+    page_number: int
+    page_size: int
+    total_pages: int
+    total_records: int
+    content: list

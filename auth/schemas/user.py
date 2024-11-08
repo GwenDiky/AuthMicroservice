@@ -63,13 +63,5 @@ class UserUpdateSchema(BaseModel):
     date_of_birth: Optional[date] = None
     phone_number: Optional[PhoneNumber] = None
 
-class MessageSchema(BaseModel):
+class UserMessageSchema(BaseModel):
     message: str
-
-
-class UserLogoutSchema(MessageSchema):
-    message: str = "Successfully logged out!"
-
-
-class UserPasswordChangedSchema(MessageSchema):
-    message: str = "Password was changed successfully for current user!"

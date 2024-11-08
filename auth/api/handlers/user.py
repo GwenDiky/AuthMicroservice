@@ -19,11 +19,11 @@ from auth.exceptions import (AuthFailedException, InvalidTokenException,
 from auth.models.core import get_async_session
 from auth.models.user_model import User
 from auth.schemas.email import EmailResponseSchema
-from auth.schemas.page import ResponseSchema, PaginationSchema
+from auth.schemas.paginator import PaginationSchema
 from auth.schemas.token import TokenSchema
 from auth.schemas.user import (UserCreateSchema, UserInDBSchema,
                                UserSchemaWithoutPassword, UserUpdateSchema,
-                               MessageSchema)
+                               UserMessageSchema)
 from auth.services.email import is_email_verified, verify_email
 from auth.services.user import UserRepository
 from auth.utils.redis_client import (add_token_to_blacklist, get_redis,
@@ -157,7 +157,7 @@ async def get_info_by_token(
 @user_router.post("/logout")
 async def logout(
     token: str = Depends(oauth2_scheme), redis_client=Depends(get_redis)
-) -> MessageSchema:
+) -> UserMessageSchema:
     logging.info(f"Current token: {token}")
 
     if not token:
@@ -165,7 +165,7 @@ async def logout(
         raise InvalidTokenException
 
     await add_token_to_blacklist(token, redis_client)
-    return MessageSchema(
+    return UserMessageSchema(
         "Successfully logged out!"
     )
 
@@ -252,7 +252,7 @@ async def verify_user_account_password_forgot(
     hashed_password = await hash_password(new_password)
     await UserRepository(db).change_password_of_current_user(user.id, hashed_password)
 
-    return UserPasswordChangedSchema(
+    return UserMessageSchema(
         "Password was changed successfully for current user!"
     )
 
