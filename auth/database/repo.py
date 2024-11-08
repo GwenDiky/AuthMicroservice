@@ -13,7 +13,9 @@ from auth.core.config import setup_logging
 from auth.exceptions import (BadRequestException, SignUpFailedException,
                              UserNotFoundException)
 from auth.models.user_model import User
-from auth.schemas.page import PageResponse
+from auth.schemas.page import PaginationSchema
+
+from auth.schemas.paginator import Paginator
 
 setup_logging()
 
@@ -168,13 +170,25 @@ class SqlAlchemyRepository(AbstractRepository):
 
         total_page = math.ceil(total_record / limit)
 
-        return PageResponse(
+        return PaginationSchema(
             page_number=page,
             page_size=limit,
             total_pages=total_page,
             total_record=total_record,
             content=result_list,
         )
+
+    async def get_all(self, paginator: Paginator):
+        query = select(self.model)
+        query = paginator.apply(query, self.model)
+        result = await self.db.execute(query)
+        users = result.scalars().all()
+        return users
+
+    async def get_total_count(self):
+        count_query = select(func.count()).select_from(self.model)
+        total_records_result = await self.db.execute(count_query)
+        return total_records_result.scalar()
 
     @staticmethod
     def convert_sort(sort):

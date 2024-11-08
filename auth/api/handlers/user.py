@@ -19,7 +19,7 @@ from auth.exceptions import (AuthFailedException, InvalidTokenException,
 from auth.models.core import get_async_session
 from auth.models.user_model import User
 from auth.schemas.email import EmailResponseSchema
-from auth.schemas.page import ResponseSchema
+from auth.schemas.page import ResponseSchema, PaginationSchema
 from auth.schemas.token import TokenSchema
 from auth.schemas.user import (UserCreateSchema, UserInDBSchema,
                                UserSchemaWithoutPassword, UserUpdateSchema,
@@ -33,6 +33,13 @@ from auth.utils.utils_mail import (create_user_send_message,
                                    decode_url_safe_token,
                                    forgot_password_send_message)
 from auth.utils.utils_users import compare_passwords, hash_password
+from auth.schemas.paginator import Paginator
+from typing import Optional
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from sqlalchemy import asc, desc
+from fastapi import Depends, Query
+from sqlalchemy import func
 
 setup_logging()
 
@@ -269,40 +276,35 @@ async def delete_me(
         raise AuthFailedException
 
 
-@user_router.get(
-    "/get-all-users", response_model=ResponseSchema, response_model_exclude_none=True
-)
-async def get_all_person(
-    page: int = 1,
-    limit: int = 10,
-    sort: str = Query(None, alias="sort"),
-    filter: str = Query(None, alias="filter"),
-    db: AsyncSession = Depends(get_async_session),
+@user_router.get("/users", response_model=PaginationSchema, response_model_exclude_none=True)
+async def get_users(
+        paginator: Paginator = Depends(),
+        db: AsyncSession = Depends(get_async_session),
 ):
-    result = await UserRepository(db).get_all_users(page, limit, sort, filter)
-    users = [record["User"] for record in result.content]
-    user_schema = []
-    for user in users:
-        user_schema.append(
-            UserSchemaWithoutPassword(
-                id=user.id,
-                username=user.username,
-                created_at=user.created_at,
-                is_superuser=user.is_superuser,
-                date_of_birth=user.date_of_birth,
-                phone_number=user.phone_number,
-                email=user.email,
-                is_verified=user.is_verified,
-            )
-        )
 
-    return ResponseSchema(
-        detail="Successfully fetched user's data!",
-        result={
-            "page_number": page,
-            "page_size": limit,
-            "total_pages": result.total_pages,
-            "total_record": result.total_record,
-            "content": user_schema,
-        },
+    users = await UserRepository(db).get_all(paginator)
+    total_records = await UserRepository(db).get_total_count()
+
+    user_schema = [
+        UserSchemaWithoutPassword(
+            id=user.id,
+            username=user.username,
+            created_at=user.created_at,
+            is_superuser=user.is_superuser,
+            date_of_birth=user.date_of_birth,
+            phone_number=user.phone_number,
+            email=user.email,
+            is_verified=user.is_verified,
+        )
+        for user in users
+    ]
+
+    total_pages = (total_records // paginator.limit) + (1 if total_records % paginator.limit != 0 else 0)
+
+    return PaginationSchema(
+        page_number=paginator.page,
+        page_size=paginator.limit,
+        total_pages=total_pages,
+        total_records=total_records,
+        content=user_schema
     )

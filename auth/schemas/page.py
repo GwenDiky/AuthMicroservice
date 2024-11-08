@@ -8,9 +8,9 @@ class ResponseSchema(BaseModel):
     result: Any
 
 
-class PageResponse(BaseModel):
+class PaginationSchema(BaseModel):
     page_number: int
     page_size: int
     total_pages: int
-    total_record: int
-    content: List[Any]
+    total_records: int
+    content: list
