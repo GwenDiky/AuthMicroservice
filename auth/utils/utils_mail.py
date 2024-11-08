@@ -25,9 +25,9 @@ async def decode_url_safe_token(token: str):
         logging.error("Token decode was failed")
 
 
-async def forgot_password_send_message(email: str, new_password: str) -> None:
+async def forgot_password_send_message(email: str, password_hash: str) -> None:
     token = await create_url_safe_token({"email": email})
-    link = f"http://{settings.domain}/api/user/reset-password/verify/{token}/{new_password}"
+    link = f"http://{settings.domain}/api/user/reset-password/verify/{token}/{password_hash}"
 
     html_body = templates.get_template("forgot-password.html").render(link=link)
 

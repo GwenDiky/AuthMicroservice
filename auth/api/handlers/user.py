@@ -238,9 +238,9 @@ async def verify_user_account(
     )
 
 
-@user_router.get("/reset-password/verify/{token}/{new_password}")
+@user_router.get("/reset-password/verify/{token}/{password_hash}")
 async def verify_user_account_password_forgot(
-    token: str, new_password: str, db: AsyncSession = Depends(get_async_session)
+    token: str, password_hash: str, db: AsyncSession = Depends(get_async_session)
 ):
     token_data = await decode_url_safe_token(token)
     user_email = token_data.get("email")
@@ -249,8 +249,7 @@ async def verify_user_account_password_forgot(
     if not user:
         raise UserNotFoundException
 
-    hashed_password = await hash_password(new_password)
-    await UserRepository(db).change_password_of_current_user(user.id, hashed_password)
+    await UserRepository(db).change_password_of_current_user(user.id, password_hash)
 
     return UserMessageSchema(
         "Password was changed successfully for current user!"
@@ -259,7 +258,8 @@ async def verify_user_account_password_forgot(
 
 @user_router.post("/forgot-password")
 async def forgot_password(email: str, new_password: str) -> dict:
-    await forgot_password_send_message(email, new_password)
+    password_hash = await hash_password(new_password)
+    await forgot_password_send_message(email, password_hash)
     return EmailResponseSchema(f"Check up u'r mail: {email}")
 
 
