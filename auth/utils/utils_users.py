@@ -1,5 +1,7 @@
 import bcrypt
+
 from auth.exceptions import AuthFailedException
+
 
 async def compare_passwords(password, hashed_password):
     if not bcrypt.checkpw(password.encode("utf-8"), hashed_password.encode("utf-8")):

@@ -6,6 +6,8 @@ from sqlalchemy import func, or_, select, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from typing import Optional
+
 from auth.core.base import Base
 from auth.core.config import setup_logging
 from auth.exceptions import (BadRequestException, SignUpFailedException,
@@ -125,8 +127,8 @@ class SqlAlchemyRepository(AbstractRepository):
         model: Base,
         page: int = 1,
         limit: int = 10,
-        sort: str = None,
-        filter: str = None,
+        sort: Optional[str] = None,
+        filter: Optional[str] = None,
     ):
         query = select(model)
         if filter is not None and filter != "null":

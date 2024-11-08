@@ -45,7 +45,7 @@ class AuthFailedException(HTTPException):
 class InactiveUserException(HTTPException):
     def __init__(self) -> None:
         super().__init__(
-            status_coded=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail="User is inactive",
             headers=headers,
         )

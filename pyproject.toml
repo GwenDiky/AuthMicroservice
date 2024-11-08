@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "auth"
+name = "authmicroservice"
 version = "0.1.0"
 description = ""
 authors = ["Tamagil <tamagiltamagil@gmail.com>"]
@@ -33,6 +33,7 @@ aioboto3 = "^13.2.0"
 pre-commit = "^4.0.1"
 black = "^24.10.0"
 isort = "^5.13.2"
+mypy = "^1.13.0"
 
 [tool.poetry.group.dev.dependencies]
 httpx = "^0.27.2"

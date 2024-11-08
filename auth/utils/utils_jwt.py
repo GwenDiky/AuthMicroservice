@@ -17,7 +17,7 @@ async def encode_jwt(
     algorithm: str = settings.jwt.jwt_algorithm,
     secret: str = settings.jwt.jwt_secret,
     expire_timedelta: timedelta | None = None,
-) -> Dict[str, str]:
+) -> str:
     if expire_timedelta is None:
         expire_timedelta = timedelta(minutes=settings.jwt.access_token_expire_minutes)
 
@@ -32,7 +32,6 @@ async def encode_jwt(
 
     token = jwt.encode(to_encode, secret, algorithm=algorithm)
     return token
-
 
 
 async def decode_jwt(
