@@ -5,7 +5,7 @@ import aioboto3
 from fastapi_mail import MessageSchema
 
 from auth.core.config import settings, setup_logging
-from auth.exceptions import MailVerificationFailed
+from auth.exceptions import MailVerificationFailedException
 
 setup_logging()
 
@@ -20,9 +20,15 @@ async def is_email_verified(email: str) -> bool:
         region_name=settings.mail.aws_default_region,
         endpoint_url=settings.mail.localstack_endpoint,
     ) as ses:
-        response = await ses.get_identity_verification_attributes(Identities=[email])
+        response = await ses.get_identity_verification_attributes(
+            Identities=[email],
+        )
         verification_status = (
-            response["VerificationAttributes"].get(email, {}).get("VerificationStatus")
+            response[
+                "VerificationAttributes"
+            ].get(email, {}).get(
+                "VerificationStatus"
+            )
         )
         return verification_status == "Success"
 
@@ -36,13 +42,14 @@ async def verify_email(email):
         endpoint_url=settings.mail.localstack_endpoint,
     ) as ses:
         response = await ses.verify_email_identity(EmailAddress=email)
-        logging.info(f"Verification initiated for " f"{email}: {response}")
+        logging.info(f"Verification initiated for " f"{email}:" f" {response}")
 
         if response is None:
-            raise MailVerificationFailed
+            raise MailVerificationFailedException
 
 
-async def send_email(recipients: list, subject: str, body: str, html_body: str) -> None:
+async def send_email(recipients: list, subject: str,
+                     body: str, html_body: str) -> None:
     async with aioboto3.Session().client(
         "ses",
         region_name=settings.mail.aws_default_region,

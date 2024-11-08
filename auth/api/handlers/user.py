@@ -10,9 +10,11 @@ from auth.api.dependecies import (get_current_auth_user,
                                   get_info_of_user_by_token)
 from auth.core.config import settings, setup_logging
 from auth.exceptions import (AuthFailedException, InvalidTokenException,
+                             MailNotVerifiedException,
                              PasswordNotChangedException,
                              ProfileNotChangedException, SignUpFailedException,
-                             UserAlreadyVerified, UserNotFoundException)
+                             UserAlreadyVerifiedException,
+                             UserNotFoundException)
 from auth.models.core import get_async_session
 from auth.models.user_model import User
 from auth.schemas.email import EmailResponseSchema
@@ -68,20 +70,17 @@ async def resend_verification(
         raise AuthFailedException
 
     if user.is_verified:
-        raise UserAlreadyVerified
+        raise UserAlreadyVerifiedException
 
     await verify_email(email=email)
 
     if not await is_email_verified(email):
-        raise Exception(
-            "Recipient email is not verified. Please verify the email first."
-        )
+        raise MailNotVerifiedException
 
     await create_user_send_message(email)
     return EmailResponseSchema(
         message="Verification email recent successfully",
     )
-    # return {"message": "Verification email resent successfully"}
 
 
 @user_router.post("/login", response_model=TokenSchema)
@@ -228,7 +227,8 @@ async def verify_user_account(
 
 @user_router.get("/reset-password/verify/{token}/{new_password}")
 async def verify_user_account_password_forgot(
-    token: str, new_password: str, db: AsyncSession = Depends(get_async_session)
+    token: str, new_password: str,
+    db: AsyncSession = Depends(get_async_session)
 ):
     token_data = await decode_url_safe_token(token)
     user_email = token_data.get("email")
@@ -238,7 +238,9 @@ async def verify_user_account_password_forgot(
         raise UserNotFoundException
 
     hashed_password = await hash_password(new_password)
-    await UserRepository(db).change_password_of_current_user(user.id, hashed_password)
+    await UserRepository(db).change_password_of_current_user(
+        user.id, hashed_password
+    )
 
     return {"new_password": user.password}
 
@@ -251,7 +253,8 @@ async def forgot_password(email: str, new_password: str) -> dict:
 
 @user_router.delete("/me/delete")
 async def delete_me(
-    token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_async_session)
+    token: str = Depends(oauth2_scheme),
+    db: AsyncSession = Depends(get_async_session)
 ) -> dict:
     user = await get_current_auth_user(token, db)
 
@@ -263,7 +266,9 @@ async def delete_me(
 
 
 @user_router.get(
-    "/get-all-users", response_model=ResponseSchema, response_model_exclude_none=True
+    "/get-all-users",
+    response_model=ResponseSchema,
+    response_model_exclude_none=True
 )
 async def get_all_person(
     page: int = 1,

@@ -89,7 +89,7 @@ class BadRequestException(HTTPException, SQLAlchemyError):
         SQLAlchemyError.__init__(self)
 
 
-class UserAlreadyExists(HTTPException):
+class UserAlreadyExistsException(HTTPException):
     def __init__(self) -> None:
         super().__init__(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -98,7 +98,7 @@ class UserAlreadyExists(HTTPException):
         )
 
 
-class UserAlreadyVerified(HTTPException):
+class UserAlreadyVerifiedException(HTTPException):
     def __init__(self) -> None:
         super().__init__(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -107,10 +107,20 @@ class UserAlreadyVerified(HTTPException):
         )
 
 
-class MailVerificationFailed(HTTPException):
+class MailVerificationFailedException(HTTPException):
     def __init__(self) -> None:
         super().__init__(
             status_code=status.HTTP_417_EXPECTATION_FAILED,
             detail="Mail verification failed",
+            headers=headers,
+        )
+
+
+class MailNotVerifiedException(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(
+            status_code=status.HTTP_417_EXPECTATION_FAILED,
+            detail="Recipient email is not verified. "
+                   "Please verify the email first.",
             headers=headers,
         )
