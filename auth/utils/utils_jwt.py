@@ -1,5 +1,5 @@
 import time
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 from typing import Dict
 
 import jwt
@@ -32,6 +32,7 @@ async def encode_jwt(
 
     token = jwt.encode(to_encode, secret, algorithm=algorithm)
     return token
+
 
 
 async def decode_jwt(

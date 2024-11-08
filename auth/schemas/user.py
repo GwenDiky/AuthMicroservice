@@ -1,9 +1,9 @@
 from datetime import date, datetime
-from typing import Optional, Annotated
+from typing import Annotated, Optional
 from uuid import UUID, uuid4
 
-from annotated_types import MinLen, MaxLen
-from pydantic import BaseModel, EmailStr, ConfigDict, Field
+from annotated_types import MaxLen, MinLen
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from pydantic_extra_types.phone_numbers import PhoneNumber
 
 

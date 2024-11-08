@@ -2,12 +2,11 @@ from jwt import PyJWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.core.config import setup_logging
-from auth.utils.utils_jwt import decode_jwt
-from auth.services.user import UserRepository
-from auth.exceptions import InvalidTokenException
+from auth.exceptions import AuthFailedException, InvalidTokenException
 from auth.schemas.token import TokenSchema
-from auth.schemas.user import UserCreateSchema
-from auth.schemas.user import UserInDBSchema
+from auth.schemas.user import UserCreateSchema, UserInDBSchema
+from auth.services.user import UserRepository
+from auth.utils.utils_jwt import decode_jwt
 
 setup_logging()
 

@@ -1,11 +1,11 @@
+import logging
 from pathlib import Path
 
-from fastapi_mail import FastMail, ConnectionConfig, MessageSchema
-
-from auth.core.config import settings
-from auth.core.config import setup_logging
-import logging
 import aioboto3
+from fastapi_mail import MessageSchema
+
+from auth.core.config import settings, setup_logging
+from auth.exceptions import MailVerificationFailed
 
 setup_logging()
 
@@ -35,11 +35,11 @@ async def verify_email(email):
         region_name=settings.mail.aws_default_region,
         endpoint_url=settings.mail.localstack_endpoint,
     ) as ses:
-        try:
-            response = await ses.verify_email_identity(EmailAddress=email)
-            logging.info(f"Verification initiated for {email}: {response}")
-        except Exception as e:
-            logging.error(f"Failed to verify email: {e}")
+        response = await ses.verify_email_identity(EmailAddress=email)
+        logging.info(f"Verification initiated for " f"{email}: {response}")
+
+        if response is None:
+            raise MailVerificationFailed
 
 
 async def send_email(recipients: list, subject: str, body: str, html_body: str) -> None:

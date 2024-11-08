@@ -105,3 +105,12 @@ class UserAlreadyVerified(HTTPException):
             detail="Your account is already verified.",
             headers=headers,
         )
+
+
+class MailVerificationFailed(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(
+            status_code=status.HTTP_417_EXPECTATION_FAILED,
+            detail="Mail verification failed",
+            headers=headers,
+        )

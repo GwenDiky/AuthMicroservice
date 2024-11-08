@@ -1,11 +1,9 @@
 import logging
 from datetime import timedelta
 
-import redis
 import redis.asyncio as redis
 
-from auth.core.config import settings
-from auth.core.config import setup_logging
+from auth.core.config import settings, setup_logging
 
 setup_logging()
 

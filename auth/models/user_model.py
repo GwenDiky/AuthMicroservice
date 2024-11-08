@@ -1,8 +1,6 @@
 from datetime import datetime
 
-from datetime import datetime
-
-from sqlalchemy import MetaData, Integer, Column, String, Boolean, Date
+from sqlalchemy import Boolean, Column, Date, Integer, MetaData, String
 
 from auth.core.base import Base
 

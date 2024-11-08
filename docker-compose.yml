@@ -15,12 +15,11 @@ services:
       - PYTHONDONTWRITEBYTECODE=1
       - PYTHONPATH=/app
     depends_on:
-      - pgdb
       - redis
       - localstack
+      - pgdb
   pgdb:
     image: postgres:bullseye
-    restart: always
     environment:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}

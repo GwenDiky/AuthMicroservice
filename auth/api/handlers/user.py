@@ -1,48 +1,34 @@
 import logging
 
 import jwt
-from fastapi import APIRouter, Depends
-from fastapi import Query
+from fastapi import APIRouter, Depends, Query
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jwt import PyJWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from auth.api.dependecies import get_current_auth_user, get_info_of_user_by_token
-from auth.core.config import settings
-from auth.core.config import setup_logging
-from auth.exceptions import (
-    AuthFailedException,
-    SignUpFailedException,
-    PasswordNotChangedException,
-    ProfileNotChangedException,
-    InvalidTokenException,
-    UserAlreadyVerified,
-)
+from auth.api.dependecies import (get_current_auth_user,
+                                  get_info_of_user_by_token)
+from auth.core.config import settings, setup_logging
+from auth.exceptions import (AuthFailedException, InvalidTokenException,
+                             PasswordNotChangedException,
+                             ProfileNotChangedException, SignUpFailedException,
+                             UserAlreadyVerified, UserNotFoundException)
 from auth.models.core import get_async_session
 from auth.models.user_model import User
+from auth.schemas.email import EmailResponseSchema
 from auth.schemas.page import ResponseSchema
 from auth.schemas.token import TokenSchema
-from auth.schemas.user import (
-    UserCreateSchema,
-    UserInDBSchema,
-    UserUpdateSchema,
-    UserSchemaWithoutPassword,
-)
-from auth.services.email import verify_email, is_email_verified
+from auth.schemas.user import (UserCreateSchema, UserInDBSchema,
+                               UserSchemaWithoutPassword, UserUpdateSchema)
+from auth.services.email import is_email_verified, verify_email
 from auth.services.user import UserRepository
-from auth.utils.redis_client import (
-    add_token_to_blacklist,
-    is_token_blacklisted,
-    get_redis,
-)
+from auth.utils.redis_client import (add_token_to_blacklist, get_redis,
+                                     is_token_blacklisted)
 from auth.utils.utils_jwt import encode_jwt
-from auth.utils.utils_mail import (
-    decode_url_safe_token,
-    forgot_password_send_message,
-    create_user_send_message,
-)
-from auth.utils.utils_users import compare_passwords
-from auth.utils.utils_users import hash_password
+from auth.utils.utils_mail import (create_user_send_message,
+                                   decode_url_safe_token,
+                                   forgot_password_send_message)
+from auth.utils.utils_users import compare_passwords, hash_password
 
 setup_logging()
 
@@ -92,7 +78,10 @@ async def resend_verification(
         )
 
     await create_user_send_message(email)
-    return {"message": "Verification email resent successfully"}
+    return EmailResponseSchema(
+        message="Verification email recent successfully",
+    )
+    # return {"message": "Verification email resent successfully"}
 
 
 @user_router.post("/login", response_model=TokenSchema)

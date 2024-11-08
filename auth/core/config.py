@@ -1,11 +1,11 @@
 import logging
 
 from fastapi.security import HTTPBearer
-
-http_bearer = HTTPBearer()
+from fastapi.templating import Jinja2Templates
 from pydantic import Field
 from pydantic_settings import BaseSettings
-from fastapi.templating import Jinja2Templates
+
+http_bearer = HTTPBearer()
 
 
 class MailSettings(BaseSettings):
@@ -26,7 +26,7 @@ class MailSettings(BaseSettings):
 
 
 class DbSettings(BaseSettings):
-    db_url: str
+    db_url: str = Field(validation_alias="SQLALCHEMY_DATABASE_URL")
     db_user: str
     db_password: str
     db_name: str

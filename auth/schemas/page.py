@@ -1,6 +1,6 @@
-from typing import List, Generic, TypeVar, Any
+from typing import Any, List
+
 from pydantic import BaseModel
-from auth.core.base import Base
 
 
 class ResponseSchema(BaseModel):

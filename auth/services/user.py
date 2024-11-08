@@ -1,11 +1,13 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Query
-from auth.database.repo import SqlAlchemyRepository
-from sqlalchemy.exc import SQLAlchemyError
-from auth.models.user_model import User
-from sqlalchemy import select
-from auth.exceptions import BadRequestException, UserNotFoundException
 import logging
+
+from fastapi import Query
+from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from auth.database.repo import SqlAlchemyRepository
+from auth.exceptions import BadRequestException, UserNotFoundException
+from auth.models.user_model import User
 
 
 class UserRepository(SqlAlchemyRepository):

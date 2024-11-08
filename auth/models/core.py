@@ -1,4 +1,5 @@
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy.ext.asyncio import (AsyncSession, async_sessionmaker,
+                                    create_async_engine)
 
 from auth.core.base import Base
 from auth.core.config import settings
@@ -16,13 +17,7 @@ sessionLocalAsync = async_sessionmaker(
 
 async def get_async_session() -> AsyncSession:
     async with sessionLocalAsync() as session:
-        try:
-            yield session
-        except:
-            await session.rollback()
-            raise
-        finally:
-            await session.close()
+        yield session
 
 
 async def async_init_db():

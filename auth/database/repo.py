@@ -1,22 +1,17 @@
 import logging
-from auth.core.config import setup_logging
+import math
 from abc import ABC, abstractmethod
 
-from sqlalchemy import select, text, or_
+from sqlalchemy import func, or_, select, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.core.base import Base
+from auth.core.config import setup_logging
+from auth.exceptions import (BadRequestException, SignUpFailedException,
+                             UserNotFoundException)
 from auth.models.user_model import User
-from auth.exceptions import (
-    BadRequestException,
-    UserNotFoundException,
-    SignUpFailedException,
-)
-from sqlalchemy import func
-import math
 from auth.schemas.page import PageResponse
-from auth.schemas.user import UserInDBSchema
 
 setup_logging()
 
