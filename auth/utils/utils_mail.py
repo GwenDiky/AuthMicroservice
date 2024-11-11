@@ -42,9 +42,8 @@ async def forgot_password_send_message(email: str, password_hash: str) -> None:
         f"http://{settings.domain}/api/user/reset-password/verify/"
         f"{token}/{password_hash}"
     )
-    html_body = templates.get_template(
-        "forgot-password.html"
-    ).render(link=link)
+    html_body = templates.get_template("forgot-password.html").render(
+        link=link)
     await send_email(
         recipients=[email],
         subject="Verify your email",

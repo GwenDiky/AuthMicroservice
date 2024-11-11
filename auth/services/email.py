@@ -14,28 +14,29 @@ Base_DIR = Path(__file__).resolve().parent.parent.parent
 
 async def is_email_verified(email: str) -> bool:
     async with aioboto3.Session().client(
-        "ses",
-        aws_access_key_id=settings.mail.aws_access_key_id,
-        aws_secret_access_key=settings.mail.aws_secret_access_key,
-        region_name=settings.mail.aws_default_region,
-        endpoint_url=settings.mail.localstack_endpoint,
+            "ses",
+            aws_access_key_id=settings.mail.aws_access_key_id,
+            aws_secret_access_key=settings.mail.aws_secret_access_key,
+            region_name=settings.mail.aws_default_region,
+            endpoint_url=settings.mail.localstack_endpoint,
     ) as ses:
         response = await ses.get_identity_verification_attributes(
             Identities=[email],
         )
         verification_status = (
-            response["VerificationAttributes"].get(email, {}).get("VerificationStatus")
+            response["VerificationAttributes"].get(email, {}).get(
+                "VerificationStatus")
         )
         return verification_status == "Success"
 
 
 async def verify_email(email):
     async with aioboto3.Session().client(
-        "ses",
-        aws_access_key_id=settings.mail.aws_access_key_id,
-        aws_secret_access_key=settings.mail.aws_secret_access_key,
-        region_name=settings.mail.aws_default_region,
-        endpoint_url=settings.mail.localstack_endpoint,
+            "ses",
+            aws_access_key_id=settings.mail.aws_access_key_id,
+            aws_secret_access_key=settings.mail.aws_secret_access_key,
+            region_name=settings.mail.aws_default_region,
+            endpoint_url=settings.mail.localstack_endpoint,
     ) as ses:
         response = await ses.verify_email_identity(EmailAddress=email)
         logging.info(f"Verification initiated for " f"{email}:" f" {response}")
@@ -44,13 +45,14 @@ async def verify_email(email):
             raise MailVerificationFailedException
 
 
-async def send_email(recipients: list, subject: str, body: str, html_body: str) -> None:
+async def send_email(recipients: list, subject: str, body: str,
+                     html_body: str) -> None:
     async with aioboto3.Session().client(
-        "ses",
-        region_name=settings.mail.aws_default_region,
-        endpoint_url=settings.mail.localstack_endpoint,
-        aws_access_key_id=settings.mail.aws_access_key_id,
-        aws_secret_access_key=settings.mail.aws_secret_access_key,
+            "ses",
+            region_name=settings.mail.aws_default_region,
+            endpoint_url=settings.mail.localstack_endpoint,
+            aws_access_key_id=settings.mail.aws_access_key_id,
+            aws_secret_access_key=settings.mail.aws_secret_access_key,
     ) as ses:
         try:
             await verify_email(settings.mail.mail_from)

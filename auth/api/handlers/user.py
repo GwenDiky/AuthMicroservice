@@ -43,7 +43,7 @@ TOKEN_TYPE = "Bearer"
 
 @user_router.post("/signup")
 async def signup(
-    user: UserCreateSchema, db: AsyncSession = Depends(get_async_session)
+        user: UserCreateSchema, db: AsyncSession = Depends(get_async_session)
 ) -> UserInDBSchema:
     user.password = await hash_password(user.password)
 
@@ -64,7 +64,7 @@ async def signup(
 
 @user_router.post("/resend_verification")
 async def resend_verification(
-    email: str, db: AsyncSession = Depends(get_async_session)
+        email: str, db: AsyncSession = Depends(get_async_session)
 ):
     user = await UserRepository(db).get_user_by_email(email)
     if not user:
@@ -86,8 +86,8 @@ async def resend_verification(
 
 @user_router.post("/login", response_model=TokenSchema)
 async def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: AsyncSession = Depends(get_async_session),
+        form_data: OAuth2PasswordRequestForm = Depends(),
+        db: AsyncSession = Depends(get_async_session),
 ) -> TokenSchema:
     user = await UserRepository(db).get_user_by_username(form_data.username)
     if not user:
@@ -107,9 +107,9 @@ async def login(
 
 @user_router.get("/me", response_model=UserCreateSchema)
 async def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: AsyncSession = Depends(get_async_session),
-    redis_client=Depends(get_redis),
+        token: str = Depends(oauth2_scheme),
+        db: AsyncSession = Depends(get_async_session),
+        redis_client=Depends(get_redis),
 ) -> UserCreateSchema:
     if await is_token_blacklisted(token, redis_client):
         logging.info("Token is blacklisted")
@@ -119,9 +119,9 @@ async def get_current_user(
 
 @user_router.post("/refresh-token", response_model=TokenSchema)
 async def refresh_token(
-    token: str = Depends(oauth2_scheme),
-    db: AsyncSession = Depends(get_async_session),
-    redis_client=Depends(get_redis),
+        token: str = Depends(oauth2_scheme),
+        db: AsyncSession = Depends(get_async_session),
+        redis_client=Depends(get_redis),
 ) -> TokenSchema:
     try:
         if await is_token_blacklisted(token, redis_client):
@@ -141,14 +141,14 @@ async def refresh_token(
 
 @user_router.post("/get-info-of-user-by-token")
 async def get_info_by_token(
-    token: TokenSchema, db: AsyncSession = Depends(get_async_session)
+        token: TokenSchema, db: AsyncSession = Depends(get_async_session)
 ) -> UserInDBSchema:
     return await get_info_of_user_by_token(token, db)
 
 
 @user_router.post("/logout")
 async def logout(
-    token: str = Depends(oauth2_scheme), redis_client=Depends(get_redis)
+        token: str = Depends(oauth2_scheme), redis_client=Depends(get_redis)
 ) -> UserMessageSchema:
     logging.info(f"Current token: {token}")
 
@@ -162,10 +162,10 @@ async def logout(
 
 @user_router.put("/change-password")
 async def change_password(
-    new_password: str,
-    token: str = Depends(oauth2_scheme),
-    db: AsyncSession = Depends(get_async_session),
-    redis_client=Depends(get_redis),
+        new_password: str,
+        token: str = Depends(oauth2_scheme),
+        db: AsyncSession = Depends(get_async_session),
+        redis_client=Depends(get_redis),
 ) -> UserInDBSchema:
     if await is_token_blacklisted(token, redis_client):
         logging.info("Token is blacklisted")
@@ -189,9 +189,9 @@ async def change_password(
 
 @user_router.put("/me/update-profile")
 async def update_profile_of_current_user(
-    user: UserUpdateSchema,
-    token: str = Depends(oauth2_scheme),
-    db: AsyncSession = Depends(get_async_session),
+        user: UserUpdateSchema,
+        token: str = Depends(oauth2_scheme),
+        db: AsyncSession = Depends(get_async_session),
 ):
     user_data = user.model_dump()
     user_in_db = await get_current_auth_user(token, db)
@@ -211,7 +211,7 @@ async def update_profile_of_current_user(
 
 @user_router.get("/verify/{token}")
 async def verify_user_account(
-    token: str, db: AsyncSession = Depends(get_async_session)
+        token: str, db: AsyncSession = Depends(get_async_session)
 ):
     token_data = await decode_url_safe_token(token)
     user_email = token_data.email
@@ -230,8 +230,8 @@ async def verify_user_account(
 
 @user_router.get("/reset-password/verify/{token}/{password_hash}")
 async def verify_user_account_password_forgot(
-    token: str, password_hash: str,
-    db: AsyncSession = Depends(get_async_session)
+        token: str, password_hash: str,
+        db: AsyncSession = Depends(get_async_session)
 ):
     token_data = await decode_url_safe_token(token)
     user_email = token_data.get("email")
@@ -239,9 +239,8 @@ async def verify_user_account_password_forgot(
     user = await UserRepository(db).get_user_by_email(user_email)
     if not user:
         raise UserNotFoundException
-    await UserRepository(db).change_password_of_current_user(
-        user.id, password_hash
-    )
+    await UserRepository(db).change_password_of_current_user(user.id,
+                                                             password_hash)
 
     return UserMessageSchema(
         f"Password was changed successfully for " f"current user! {token_data}"
@@ -254,10 +253,11 @@ async def forgot_password(email: str, new_password: str) -> dict:
     await forgot_password_send_message(email, password_hash)
     return EmailResponseSchema(f"Check up u'r mail: {email}")
 
+
 @user_router.delete("/me/delete")
 async def delete_me(
-    token: str = Depends(oauth2_scheme),
-    db: AsyncSession = Depends(get_async_session)
+        token: str = Depends(oauth2_scheme),
+        db: AsyncSession = Depends(get_async_session)
 ) -> dict:
     user = await get_current_auth_user(token, db)
 
@@ -272,10 +272,9 @@ async def delete_me(
     "/users", response_model=PaginationSchema, response_model_exclude_none=True
 )
 async def get_users(
-    paginator: Paginator = Depends(),
-    db: AsyncSession = Depends(get_async_session),
+        paginator: Paginator = Depends(),
+        db: AsyncSession = Depends(get_async_session),
 ):
-
     users = await UserRepository(db).get_all(paginator)
     total_records = await UserRepository(db).get_total_count()
 

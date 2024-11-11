@@ -1,6 +1,5 @@
 import time
 from datetime import datetime, timedelta
-from typing import Dict
 
 import jwt
 
@@ -13,13 +12,14 @@ async def token_response(token: str):
 
 
 async def encode_jwt(
-    payload: dict,
-    algorithm: str = settings.jwt.jwt_algorithm,
-    secret: str = settings.jwt.jwt_secret,
-    expire_timedelta: timedelta | None = None,
+        payload: dict,
+        algorithm: str = settings.jwt.jwt_algorithm,
+        secret: str = settings.jwt.jwt_secret,
+        expire_timedelta: timedelta | None = None,
 ) -> str:
     if expire_timedelta is None:
-        expire_timedelta = timedelta(minutes=settings.jwt.access_token_expire_minutes)
+        expire_timedelta = timedelta(
+            minutes=settings.jwt.access_token_expire_minutes)
 
     now = datetime.now()
     expire = now + expire_timedelta
@@ -35,9 +35,9 @@ async def encode_jwt(
 
 
 async def decode_jwt(
-    token: str,
-    algorithm: str = settings.jwt.jwt_algorithm,
-    secret: str = settings.jwt.jwt_secret,
+        token: str,
+        algorithm: str = settings.jwt.jwt_algorithm,
+        secret: str = settings.jwt.jwt_secret,
 ) -> dict:
     try:
         decoded_token = jwt.decode(token, secret, algorithms=[algorithm])

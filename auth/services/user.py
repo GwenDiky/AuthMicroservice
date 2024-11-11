@@ -34,7 +34,8 @@ class UserRepository(SqlAlchemyRepository):
     async def get_user_by_id(self, id: int) -> User:
         return await super().get_by_id(model=self.model, id=id)
 
-    async def update_status_of_user_verification(self, user_data: dict) -> User:
+    async def update_status_of_user_verification(self,
+                                                 user_data: dict) -> User:
         return await super().update_status_of_email_verification(
             model=self.model, obj_data=user_data
         )
@@ -42,11 +43,13 @@ class UserRepository(SqlAlchemyRepository):
     async def delete_user_obj(self, id: int):
         return await super().delete_obj(model=self.model, id=id)
 
-    async def update_profile_of_current_user(self, id: int, obj_data: dict) -> User:
+    async def update_profile_of_current_user(self, id: int,
+                                             obj_data: dict) -> User:
         user = await self.get_user_by_id(id)
         return await super().update_current_obj(user, obj_data)
 
-    async def change_password_of_current_user(self, id: int, hashed_password: str):
+    async def change_password_of_current_user(self, id: int,
+                                              hashed_password: str):
         try:
             user = await self.get_user_by_id(id)
             user.password = hashed_password
@@ -78,11 +81,11 @@ class UserRepository(SqlAlchemyRepository):
             raise BadRequestException(f"Database error: {db_error}")
 
     async def get_all_users(
-        self,
-        page: int = 1,
-        limit: int = 10,
-        sort: str = Query(None, alias="sort"),
-        filter: str = Query(None, alias="filter"),
+            self,
+            page: int = 1,
+            limit: int = 10,
+            sort: str = Query(None, alias="sort"),
+            filter: str = Query(None, alias="filter"),
     ):
         return await super().get_all(
             page=page, limit=limit, sort=sort, filter=filter, model=self.model
