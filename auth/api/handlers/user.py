@@ -1,8 +1,7 @@
 import logging
-from typing import Type
 
 import jwt
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jwt import PyJWTError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,27 +18,20 @@ from auth.exceptions import (AuthFailedException, InvalidTokenException,
 from auth.models.core import get_async_session
 from auth.models.user_model import User
 from auth.schemas.email import EmailResponseSchema
-from auth.schemas.paginator import PaginationSchema
+from auth.schemas.paginator import PaginationSchema, Paginator
 from auth.schemas.token import TokenSchema
 from auth.schemas.user import (UserCreateSchema, UserInDBSchema,
-                               UserSchemaWithoutPassword, UserUpdateSchema,
-                               UserMessageSchema)
+                               UserMessageSchema, UserSchemaWithoutPassword,
+                               UserUpdateSchema)
 from auth.services.email import is_email_verified, verify_email
 from auth.services.user import UserRepository
 from auth.utils.redis_client import (add_token_to_blacklist, get_redis,
                                      is_token_blacklisted)
-from auth.utils.utils_jwt import encode_jwt, decode_jwt
+from auth.utils.utils_jwt import encode_jwt
 from auth.utils.utils_mail import (create_user_send_message,
                                    decode_url_safe_token,
                                    forgot_password_send_message)
 from auth.utils.utils_users import compare_passwords, hash_password
-from auth.schemas.paginator import Paginator
-from typing import Optional
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from sqlalchemy import asc, desc
-from fastapi import Depends, Query
-from sqlalchemy import func
 
 setup_logging()
 
@@ -47,6 +39,7 @@ user_router = APIRouter()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/user/login")
 TOKEN_TYPE = "Bearer"
+
 
 @user_router.post("/signup")
 async def signup(
@@ -164,9 +157,7 @@ async def logout(
         raise InvalidTokenException
 
     await add_token_to_blacklist(token, redis_client)
-    return UserMessageSchema(
-        "Successfully logged out!"
-    )
+    return UserMessageSchema("Successfully logged out!")
 
 
 @user_router.put("/change-password")
@@ -233,13 +224,14 @@ async def verify_user_account(
         user, {"is_verified": True}
     )
     return EmailResponseSchema(
-        f"U'r account '{self.username}' verified successfully!"
+        f"U'r account '{user.username}' verified " f"successfully!"
     )
 
 
 @user_router.get("/reset-password/verify/{token}/{password_hash}")
 async def verify_user_account_password_forgot(
-    token: str, password_hash: str, db: AsyncSession = Depends(get_async_session)
+    token: str, password_hash: str,
+    db: AsyncSession = Depends(get_async_session)
 ):
     token_data = await decode_url_safe_token(token)
     user_email = token_data.get("email")
@@ -247,11 +239,12 @@ async def verify_user_account_password_forgot(
     user = await UserRepository(db).get_user_by_email(user_email)
     if not user:
         raise UserNotFoundException
-
-    await UserRepository(db).change_password_of_current_user(user.id, password_hash)
+    await UserRepository(db).change_password_of_current_user(
+        user.id, password_hash
+    )
 
     return UserMessageSchema(
-        f"Password was changed successfully for current user! {token_data}"
+        f"Password was changed successfully for " f"current user! {token_data}"
     )
 
 
@@ -261,10 +254,10 @@ async def forgot_password(email: str, new_password: str) -> dict:
     await forgot_password_send_message(email, password_hash)
     return EmailResponseSchema(f"Check up u'r mail: {email}")
 
-
 @user_router.delete("/me/delete")
 async def delete_me(
-    token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_async_session)
+    token: str = Depends(oauth2_scheme),
+    db: AsyncSession = Depends(get_async_session)
 ) -> dict:
     user = await get_current_auth_user(token, db)
 
@@ -275,10 +268,12 @@ async def delete_me(
         raise AuthFailedException
 
 
-@user_router.get("/users", response_model=PaginationSchema, response_model_exclude_none=True)
+@user_router.get(
+    "/users", response_model=PaginationSchema, response_model_exclude_none=True
+)
 async def get_users(
-        paginator: Paginator = Depends(),
-        db: AsyncSession = Depends(get_async_session),
+    paginator: Paginator = Depends(),
+    db: AsyncSession = Depends(get_async_session),
 ):
 
     users = await UserRepository(db).get_all(paginator)
@@ -298,12 +293,14 @@ async def get_users(
         for user in users
     ]
 
-    total_pages = (total_records // paginator.limit) + (1 if total_records % paginator.limit != 0 else 0)
+    total_pages = (total_records // paginator.limit) + (
+        1 if total_records % paginator.limit != 0 else 0
+    )
 
     return PaginationSchema(
         page_number=paginator.page,
         page_size=paginator.limit,
         total_pages=total_pages,
         total_records=total_records,
-        content=user_schema
+        content=user_schema,
     )

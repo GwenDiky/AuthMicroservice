@@ -62,5 +62,6 @@ class UserUpdateSchema(BaseModel):
     date_of_birth: Optional[date] = None
     phone_number: Optional[PhoneNumber] = None
 
+
 class UserMessageSchema(BaseModel):
     message: str

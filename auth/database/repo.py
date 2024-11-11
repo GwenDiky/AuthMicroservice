@@ -1,20 +1,15 @@
 import logging
-import math
 from abc import ABC, abstractmethod
 
-from sqlalchemy import func, or_, select, text
+from sqlalchemy import func, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from typing import Optional
 
 from auth.core.base import Base
 from auth.core.config import setup_logging
 from auth.exceptions import (BadRequestException, SignUpFailedException,
                              UserNotFoundException)
 from auth.models.user_model import User
-from auth.schemas.paginator import PaginationSchema
-
 from auth.schemas.paginator import Paginator
 
 setup_logging()
@@ -123,60 +118,6 @@ class SqlAlchemyRepository(AbstractRepository):
             raise BadRequestException(f"Database error: {db_error}")
 
         return model
-
-    async def get_all(
-        self,
-        model: Base,
-        page: int = 1,
-        limit: int = 10,
-        sort: Optional[str] = None,
-        filter: Optional[str] = None,
-    ):
-        query = select(model)
-        if filter is not None and filter != "null":
-            try:
-                criteria = dict(x.split("*") for x in filter.split("-"))
-            except ValueError:
-                raise ValueError(
-                    "Filter format is incorrect. Ensure it is in the format 'key*value-key*value'."
-                )
-
-            criteria_list = []
-            for attr, value in criteria.items():
-                _attr = getattr(model, attr)
-
-                if value.lower() == "true":
-                    criteria_list.append(_attr.is_(True))
-                elif value.lower() == "false":
-                    criteria_list.append(_attr.is_(False))
-                else:
-                    search = "%{}%".format(value)
-                    criteria_list.append(_attr.like(search))
-
-            query = query.filter(or_(*criteria_list))
-
-        if sort is not None and sort != "null":
-            query = query.order_by(text(self.convert_sort(sort)))
-
-        count_query = select(func.count(1)).select_from(query)
-
-        offset_page = (page - 1) * limit
-        query = query.offset(offset_page).limit(limit)
-
-        total_record = (await self.db.execute(count_query)).scalar() or 0
-        result = await self.db.execute(query)
-
-        result_list = [dict(row) for row in result.mappings()]
-
-        total_page = math.ceil(total_record / limit)
-
-        return PaginationSchema(
-            page_number=page,
-            page_size=limit,
-            total_pages=total_page,
-            total_record=total_record,
-            content=result_list,
-        )
 
     async def get_all(self, paginator: Paginator):
         query = select(self.model)

@@ -1,15 +1,12 @@
 import logging
+from datetime import datetime
 
 from itsdangerous import URLSafeTimedSerializer
 
-from auth.core.config import settings, templates
+from auth.core.config import settings, setup_logging, templates
 from auth.exceptions import InvalidTokenException
-from auth.services.email import send_email
-from auth.core.config import setup_logging
-
 from auth.schemas.token import TokenDataSchema
-
-import logging
+from auth.services.email import send_email
 
 setup_logging()
 
@@ -28,11 +25,11 @@ async def decode_url_safe_token(token: str):
     try:
         token_data = serializer.loads(token)
         validated_data = TokenDataSchema(
-            sub=token_data.get('sub'),
-            username=token_data.get('username'),
-            email=token_data.get('email'),
-            exp=datetime.fromtimestamp(token_data.get('exp')),
-            iat=datetime.fromtimestamp(token_data.get('iat'))
+            sub=token_data.get("sub"),
+            username=token_data.get("username"),
+            email=token_data.get("email"),
+            exp=datetime.fromtimestamp(token_data.get("exp")),
+            iat=datetime.fromtimestamp(token_data.get("iat")),
         )
         return validated_data
     except InvalidTokenException:
@@ -41,10 +38,13 @@ async def decode_url_safe_token(token: str):
 
 async def forgot_password_send_message(email: str, password_hash: str) -> None:
     token = await create_url_safe_token({"email": email})
-    link = f"http://{settings.domain}/api/user/reset-password/verify/{token}/{password_hash}"
-
-    html_body = templates.get_template("forgot-password.html").render(link=link)
-
+    link = (
+        f"http://{settings.domain}/api/user/reset-password/verify/"
+        f"{token}/{password_hash}"
+    )
+    html_body = templates.get_template(
+        "forgot-password.html"
+    ).render(link=link)
     await send_email(
         recipients=[email],
         subject="Verify your email",

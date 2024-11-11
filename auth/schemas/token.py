@@ -1,5 +1,7 @@
-from pydantic import BaseModel, EmailStr
 from datetime import datetime
+
+from pydantic import BaseModel, EmailStr
+
 
 class TokenSchema(BaseModel):
     access_token: str
@@ -14,6 +16,4 @@ class TokenDataSchema(BaseModel):
     iat: datetime
 
     class Config:
-        json_encoders = {
-            datetime: lambda v: int(v.timestamp())
-        }
+        json_encoders = {datetime: lambda v: int(v.timestamp())}
