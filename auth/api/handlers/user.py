@@ -28,7 +28,7 @@ from auth.services.email import is_email_verified, verify_email
 from auth.services.user import UserRepository
 from auth.utils.redis_client import (add_token_to_blacklist, get_redis,
                                      is_token_blacklisted)
-from auth.utils.utils_jwt import encode_jwt
+from auth.utils.utils_jwt import encode_jwt, decode_jwt
 from auth.utils.utils_mail import (create_user_send_message,
                                    decode_url_safe_token,
                                    forgot_password_send_message)
@@ -47,7 +47,6 @@ user_router = APIRouter()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/user/login")
 TOKEN_TYPE = "Bearer"
-
 
 @user_router.post("/signup")
 async def signup(
@@ -224,8 +223,8 @@ async def verify_user_account(
     token: str, db: AsyncSession = Depends(get_async_session)
 ):
     token_data = await decode_url_safe_token(token)
-    user_email = token_data.get("email")
-    #
+    user_email = token_data.email
+
     user = await UserRepository(db).get_user_by_email(user_email)
     if not user:
         raise UserNotFoundException
@@ -252,7 +251,7 @@ async def verify_user_account_password_forgot(
     await UserRepository(db).change_password_of_current_user(user.id, password_hash)
 
     return UserMessageSchema(
-        "Password was changed successfully for current user!"
+        f"Password was changed successfully for current user! {token_data}"
     )
 
 
