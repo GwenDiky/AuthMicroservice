@@ -83,3 +83,7 @@ volumes:
   postgres-data:
   redis-data:
   localstack-data:
+
+networks:
+  shared_networks:
+    external: true
