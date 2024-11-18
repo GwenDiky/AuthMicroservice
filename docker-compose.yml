@@ -1,5 +1,6 @@
+version: '3'
 services:
-  auth-auth:
+  api:
     build:
       context: .
       dockerfile: Dockerfile
@@ -17,8 +18,11 @@ services:
     depends_on:
       - redis
       - localstack
-      - pgdb
-  pgdb:
+      - pgdb_auth
+    networks:
+      - shared_network
+
+  pgdb_auth:
     image: postgres:bullseye
     environment:
       - POSTGRES_DB=${DB_NAME}
@@ -31,7 +35,8 @@ services:
     container_name: pgdb_auth
     ports:
       - "5434:5432"
-
+    networks:
+      - shared_network  # Подключаем контейнер к той же сети
 
   redis:
     image: redis:alpine
@@ -46,7 +51,8 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-
+    networks:
+      - shared_network
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
@@ -62,6 +68,8 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    networks:
+      - shared_network
 
   localstack:
     image: localstack/localstack
@@ -77,7 +85,8 @@ services:
     volumes:
       - "./localstack:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
-
+    networks:
+      - shared_network
 
 volumes:
   postgres-data:
@@ -85,5 +94,5 @@ volumes:
   localstack-data:
 
 networks:
-  shared_networks:
+  shared_network:
     external: true

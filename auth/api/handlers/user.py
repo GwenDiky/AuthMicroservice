@@ -5,33 +5,15 @@ from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jwt import PyJWTError
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from auth.api.dependecies import (get_current_auth_user,
-                                  get_info_of_user_by_token)
+from auth.api import dependecies
 from auth.core.config import settings, setup_logging
-from auth.exceptions import (AuthFailedException, InvalidTokenException,
-                             MailNotVerifiedException,
-                             PasswordNotChangedException,
-                             ProfileNotChangedException, SignUpFailedException,
-                             UserAlreadyVerifiedException,
-                             UserNotFoundException)
+from auth import exceptions
 from auth.models.core import get_async_session
 from auth.models.user_model import User
-from auth.schemas.email import EmailResponseSchema
-from auth.schemas.paginator import PaginationSchema, Paginator
-from auth.schemas.token import TokenSchema
-from auth.schemas.user import (UserCreateSchema, UserInDBSchema,
-                               UserMessageSchema, UserSchemaWithoutPassword,
-                               UserUpdateSchema)
+from auth.schemas import user, token, paginator, email
 from auth.services.email import is_email_verified, verify_email
 from auth.services.user import UserRepository
-from auth.utils.redis_client import (add_token_to_blacklist, get_redis,
-                                     is_token_blacklisted)
-from auth.utils.utils_jwt import encode_jwt
-from auth.utils.utils_mail import (create_user_send_message,
-                                   decode_url_safe_token,
-                                   forgot_password_send_message)
-from auth.utils.utils_users import compare_passwords, hash_password
+from auth.utils import utils_mail, utils_users, utils_jwt, redis_client
 
 setup_logging()
 
@@ -43,21 +25,20 @@ TOKEN_TYPE = "Bearer"
 
 @user_router.post("/signup")
 async def signup(
-        user: UserCreateSchema, db: AsyncSession = Depends(get_async_session)
-) -> UserInDBSchema:
-    user.password = await hash_password(user.password)
+        user: user.UserCreateSchema, db: AsyncSession = Depends(get_async_session)
+) -> user.UserInDBSchema:
+    user.password = await utils_users.hash_password(user.password)
 
-    email = user.email
     await verify_email(email)
 
     new_user = User(**user.model_dump())
     try:
         result = await UserRepository(db).add_new_user(new_user)
-        await create_user_send_message(email)
+        await utils_mail.create_user_send_message(user.email)
 
-    except SignUpFailedException:
+    except exceptions.SignUpFailedException:
         logging.error("User creation failed")
-        raise SignUpFailedException
+        raise exceptions.SignUpFailedException
 
     return result
 
@@ -68,32 +49,32 @@ async def resend_verification(
 ):
     user = await UserRepository(db).get_user_by_email(email)
     if not user:
-        raise AuthFailedException
+        raise exceptions.AuthFailedException
 
     if user.is_verified:
-        raise UserAlreadyVerifiedException
+        raise exceptions.UserAlreadyVerifiedException
 
     await verify_email(email=email)
 
     if not await is_email_verified(email):
-        raise MailNotVerifiedException
+        raise exceptions.MailNotVerifiedException
 
-    await create_user_send_message(email)
-    return EmailResponseSchema(
+    await utils_mail.create_user_send_message(email)
+    return email.EmailResponseSchema(
         message="Verification email recent successfully",
     )
 
 
-@user_router.post("/login", response_model=TokenSchema)
+@user_router.post("/login", response_model=token.TokenSchema)
 async def login(
         form_data: OAuth2PasswordRequestForm = Depends(),
         db: AsyncSession = Depends(get_async_session),
-) -> TokenSchema:
+) -> token.TokenSchema:
     user = await UserRepository(db).get_user_by_username(form_data.username)
     if not user:
-        raise AuthFailedException
+        raise exceptions.AuthFailedException
 
-    await compare_passwords(form_data.password, user.password)
+    await utils_users.compare_passwords(form_data.password, user.password)
 
     jwt_payload = {
         "sub": user.id,
@@ -101,62 +82,62 @@ async def login(
         "email": user.email,
     }
 
-    token = await encode_jwt(jwt_payload)
-    return TokenSchema(access_token=token, token_type=TOKEN_TYPE)
+    token = await utils_jwt.encode_jwt(jwt_payload)
+    return token.TokenSchema(access_token=token, token_type=TOKEN_TYPE)
 
 
-@user_router.get("/me", response_model=UserCreateSchema)
+@user_router.get("/me", response_model=user.UserCreateSchema)
 async def get_current_user(
         token: str = Depends(oauth2_scheme),
         db: AsyncSession = Depends(get_async_session),
-        redis_client=Depends(get_redis),
-) -> UserCreateSchema:
-    if await is_token_blacklisted(token, redis_client):
+        redis_client=Depends(redis_client.get_redis),
+) -> user.UserCreateSchema:
+    if await redis_client.is_token_blacklisted(token, redis_client):
         logging.info("Token is blacklisted")
-        raise InvalidTokenException
-    return await get_current_auth_user(token, db)
+        raise exceptions.InvalidTokenException
+    return await dependecies.get_current_auth_user(token, db)
 
 
-@user_router.post("/refresh-token", response_model=TokenSchema)
+@user_router.post("/refresh-token", response_model=token.TokenSchema)
 async def refresh_token(
         token: str = Depends(oauth2_scheme),
         db: AsyncSession = Depends(get_async_session),
-        redis_client=Depends(get_redis),
-) -> TokenSchema:
+        redis_client=Depends(redis_client.get_redis),
+) -> token.TokenSchema:
     try:
-        if await is_token_blacklisted(token, redis_client):
+        if await redis_client.is_token_blacklisted(token, redis_client):
             logging.info("Token is blacklisted")
-            raise InvalidTokenException
+            raise exceptions.InvalidTokenException
 
-        user = await get_current_auth_user(token, db)
+        user = await dependecies.get_current_auth_user(token, db)
         new_token = jwt.encode(
             {"sub": user.id, "username": user.username},
             settings.jwt.jwt_secret,
             algorithm=settings.jwt.jwt_algorithm,
         )
-        return TokenSchema(access_token=new_token, token_type=TOKEN_TYPE)
+        return token.TokenSchema(access_token=new_token, token_type=TOKEN_TYPE)
     except PyJWTError:
-        raise AuthFailedException
+        raise exceptions.AuthFailedException
 
 
 @user_router.post("/get-info-of-user-by-token")
 async def get_info_by_token(
-        token: TokenSchema, db: AsyncSession = Depends(get_async_session)
-) -> UserInDBSchema:
-    return await get_info_of_user_by_token(token, db)
+        token: token.TokenSchema, db: AsyncSession = Depends(get_async_session)
+) -> user.UserInDBSchema:
+    return await dependecies.get_info_of_user_by_token(token, db)
 
 
 @user_router.post("/logout")
 async def logout(
-        token: str = Depends(oauth2_scheme), redis_client=Depends(get_redis)
+        token: str = Depends(oauth2_scheme), redis_client=Depends(redis_client.get_redis)
 ) -> UserMessageSchema:
     logging.info(f"Current token: {token}")
 
     if not token:
         logging.error("Token wasn't provided")
-        raise InvalidTokenException
+        raise exceptions.InvalidTokenException
 
-    await add_token_to_blacklist(token, redis_client)
+    await redis_client.add_token_to_blacklist(token, redis_client)
     return UserMessageSchema("Successfully logged out!")
 
 
@@ -165,65 +146,65 @@ async def change_password(
         new_password: str,
         token: str = Depends(oauth2_scheme),
         db: AsyncSession = Depends(get_async_session),
-        redis_client=Depends(get_redis),
-) -> UserInDBSchema:
-    if await is_token_blacklisted(token, redis_client):
+        redis_client=Depends(redis_client.get_redis),
+) -> user.UserInDBSchema:
+    if await redis_client.is_token_blacklisted(token, redis_client):
         logging.info("Token is blacklisted")
-        raise InvalidTokenException
+        raise exceptions.InvalidTokenException
 
-    user = await get_current_auth_user(token, db)
-    hashed_password = await hash_password(new_password)
+    user = await dependecies.get_current_auth_user(token, db)
+    hashed_password = await utils_users.hash_password(new_password)
 
     try:
         result = await UserRepository(db).change_password_of_current_user(
             user.id, hashed_password
         )
         if not result:
-            raise PasswordNotChangedException
+            raise exceptions.PasswordNotChangedException
 
         return result
 
     except PyJWTError:
-        raise AuthFailedException
+        raise exceptions.AuthFailedException
 
 
 @user_router.put("/me/update-profile")
 async def update_profile_of_current_user(
-        user: UserUpdateSchema,
+        user: user.UserUpdateSchema,
         token: str = Depends(oauth2_scheme),
         db: AsyncSession = Depends(get_async_session),
 ):
     user_data = user.model_dump()
-    user_in_db = await get_current_auth_user(token, db)
+    user_in_db = await dependecies.get_current_auth_user(token, db)
 
     try:
         result = await UserRepository(db).update_profile_of_current_user(
             user_in_db.id, user_data
         )
         if not result:
-            raise ProfileNotChangedException
+            raise exceptions.ProfileNotChangedException
         logging.info("Profile was changed successfully")
         return result
 
     except PyJWTError:
-        raise AuthFailedException
+        raise exceptions.AuthFailedException
 
 
 @user_router.get("/verify/{token}")
 async def verify_user_account(
         token: str, db: AsyncSession = Depends(get_async_session)
 ):
-    token_data = await decode_url_safe_token(token)
+    token_data = await utils_mail.decode_url_safe_token(token)
     user_email = token_data.email
 
     user = await UserRepository(db).get_user_by_email(user_email)
     if not user:
-        raise UserNotFoundException
+        raise exceptions.UserNotFoundException
 
     await UserRepository(db).update_status_of_email_verification(
         user, {"is_verified": True}
     )
-    return EmailResponseSchema(
+    return email.EmailResponseSchema(
         f"U'r account '{user.username}' verified " f"successfully!"
     )
 
@@ -233,12 +214,12 @@ async def verify_user_account_password_forgot(
         token: str, password_hash: str,
         db: AsyncSession = Depends(get_async_session)
 ):
-    token_data = await decode_url_safe_token(token)
+    token_data = await utils_mail.decode_url_safe_token(token)
     user_email = token_data.get("email")
 
     user = await UserRepository(db).get_user_by_email(user_email)
     if not user:
-        raise UserNotFoundException
+        raise exceptions.UserNotFoundException
     await UserRepository(db).change_password_of_current_user(user.id,
                                                              password_hash)
 
@@ -249,9 +230,9 @@ async def verify_user_account_password_forgot(
 
 @user_router.post("/forgot-password")
 async def forgot_password(email: str, new_password: str) -> dict:
-    password_hash = await hash_password(new_password)
-    await forgot_password_send_message(email, password_hash)
-    return EmailResponseSchema(f"Check up u'r mail: {email}")
+    password_hash = await utils_users.hash_password(new_password)
+    await utils_mail.forgot_password_send_message(email, password_hash)
+    return email.EmailResponseSchema(f"Check up u'r mail: {email}")
 
 
 @user_router.delete("/me/delete")
@@ -259,27 +240,27 @@ async def delete_me(
         token: str = Depends(oauth2_scheme),
         db: AsyncSession = Depends(get_async_session)
 ) -> dict:
-    user = await get_current_auth_user(token, db)
+    user = await dependecies.get_current_auth_user(token, db)
 
     try:
         result = await UserRepository(db).delete_user(user.id)
         return result
     except PyJWTError:
-        raise AuthFailedException
+        raise exceptions.AuthFailedException
 
 
 @user_router.get(
-    "/users", response_model=PaginationSchema, response_model_exclude_none=True
+    "/users", response_model=paginator.PaginationSchema, response_model_exclude_none=True
 )
 async def get_users(
-        paginator: Paginator = Depends(),
+        paginator: paginator.Paginator = Depends(),
         db: AsyncSession = Depends(get_async_session),
 ):
     users = await UserRepository(db).get_all(paginator)
     total_records = await UserRepository(db).get_total_count()
 
     user_schema = [
-        UserSchemaWithoutPassword(
+        user.UserSchemaWithoutPassword(
             id=user.id,
             username=user.username,
             created_at=user.created_at,
@@ -296,7 +277,7 @@ async def get_users(
         1 if total_records % paginator.limit != 0 else 0
     )
 
-    return PaginationSchema(
+    return paginator.PaginationSchema(
         page_number=paginator.page,
         page_size=paginator.limit,
         total_pages=total_pages,

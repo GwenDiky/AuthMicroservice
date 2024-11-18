@@ -5,7 +5,7 @@ trap 'exit' INT TERM
 trap 'kill 0' EXIT
 
 echo "Waiting for PostgreSQL..."
-while ! nc -z pgdb 5432; do
+while ! nc -z pgdb_auth 5432; do
   sleep 0.1
 done
 echo "Done with PostgreSQL"
