@@ -9,6 +9,8 @@ from auth.database.repo import SqlAlchemyRepository
 from auth.exceptions import BadRequestException, UserNotFoundException
 from auth.models.user_model import User
 
+from auth.schemas.user import UserSchemaWithoutPassword
+
 
 class UserRepository(SqlAlchemyRepository):
     model = User
@@ -90,3 +92,22 @@ class UserRepository(SqlAlchemyRepository):
         return await super().get_all(
             page=page, limit=limit, sort=sort, filter=filter, model=self.model
         )
+
+    async def get_users_with_pagination(self, paginator):
+        users = await super().get_all(paginator)
+        total_records = await super().get_total_count()
+        user_schema = [
+            UserSchemaWithoutPassword(
+                id=user.id,
+                username=user.username,
+                created_at=user.created_at,
+                is_superuser=user.is_superuser,
+                date_of_birth=user.date_of_birth,
+                phone_number=user.phone_number,
+                email=user.email,
+                is_verified=user.is_verified,
+            )
+            for user in users
+        ]
+
+        return user_schema, total_records

@@ -10,7 +10,7 @@ from auth.core.config import settings, setup_logging
 from auth import exceptions
 from auth.models.core import get_async_session
 from auth.models.user_model import User
-from auth.schemas import user, token, paginator, email
+from auth.schemas import user, token, paginator_schema, email
 from auth.services.email import is_email_verified, verify_email
 from auth.services.user import UserRepository
 from auth.utils import utils_mail, utils_users, utils_jwt, redis_client
@@ -130,7 +130,7 @@ async def get_info_by_token(
 @user_router.post("/logout")
 async def logout(
         token: str = Depends(oauth2_scheme), redis_client=Depends(redis_client.get_redis)
-) -> UserMessageSchema:
+) -> user.UserMessageSchema:
     logging.info(f"Current token: {token}")
 
     if not token:
@@ -250,34 +250,21 @@ async def delete_me(
 
 
 @user_router.get(
-    "/users", response_model=paginator.PaginationSchema, response_model_exclude_none=True
+    "/users", response_model=paginator_schema.PaginationSchema,
+response_model_exclude_none=True
 )
 async def get_users(
-        paginator: paginator.Paginator = Depends(),
+        paginator: paginator_schema.Paginator = Depends(),
         db: AsyncSession = Depends(get_async_session),
 ):
-    users = await UserRepository(db).get_all(paginator)
-    total_records = await UserRepository(db).get_total_count()
-
-    user_schema = [
-        user.UserSchemaWithoutPassword(
-            id=user.id,
-            username=user.username,
-            created_at=user.created_at,
-            is_superuser=user.is_superuser,
-            date_of_birth=user.date_of_birth,
-            phone_number=user.phone_number,
-            email=user.email,
-            is_verified=user.is_verified,
-        )
-        for user in users
-    ]
+    user_schema, total_records = await (UserRepository(db)
+    .get_users_with_pagination(
+        paginator))
 
     total_pages = (total_records // paginator.limit) + (
-        1 if total_records % paginator.limit != 0 else 0
-    )
+        1 if total_records % paginator.limit != 0 else 0)
 
-    return paginator.PaginationSchema(
+    return paginator_schema.PaginationSchema(
         page_number=paginator.page,
         page_size=paginator.limit,
         total_pages=total_pages,

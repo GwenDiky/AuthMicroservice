@@ -10,7 +10,7 @@ from auth.core.config import setup_logging
 from auth.exceptions import (BadRequestException, SignUpFailedException,
                              UserNotFoundException)
 from auth.models.user_model import User
-from auth.schemas.paginator import Paginator
+from auth.schemas.paginator_schema import Paginator
 
 setup_logging()
 
