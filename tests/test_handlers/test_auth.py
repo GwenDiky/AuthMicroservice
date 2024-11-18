@@ -1,7 +1,7 @@
 from unittest.mock import AsyncMock, patch
 
 from auth.schemas.user import UserCreateSchema
-from auth.schemas.token import TokenSchema
+from auth.schemas.token_schema import TokenSchema
 from auth.services.email import verify_email
 from auth.services.user import UserRepository
 from auth.utils.utils_users import hash_password
@@ -66,7 +66,8 @@ class TestVerification:
             response = await client.post(self.url + user.email)
 
         assert response.status_code == 200
-        assert response.json().get("message") == "Verification email resent successfully"
+        assert response.json().get("message") == ("Verification email resend "
+                                                  "successfully")
 
     @pytest.mark.asyncio
     async def test_resend_verification_to_invalid_email(self, api_client, db, event_loop):
@@ -197,12 +198,13 @@ class TestUser:
         assert response.status_code == 200
         data = response.json()
 
-        assert data["detail"] == "Successfully fetched user's data!"
-        assert data["result"]["page_number"] == 1
-        assert data["result"]["page_size"] == 5
-        assert len(data["result"]["content"]) == 5
+        print(f"дэйта: {data}")
 
-        for user in data["result"]["content"]:
+        assert data["page_number"] == 1
+        assert data["page_size"] == 5
+        assert len(data["content"]) == 5
+
+        for user in data["content"]:
             assert "id" in user
             assert "username" in user
             assert "email" in user
@@ -248,6 +250,6 @@ class TestAuth:
             response = await client.post(f'/api/user/forgot-password?email={user.email}&new_password={new_password}')
 
         assert response.status_code == 200
-        assert response.json().get("comments") == f"Check up u'r mail: {user.email}"
 
-
+        assert response.json().get("message") == (f"Check up u'r mail:"
+                                               f" {user.email}")

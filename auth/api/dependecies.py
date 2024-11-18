@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.core.config import setup_logging
 from auth.exceptions import AuthFailedException, InvalidTokenException
-from auth.schemas.token import TokenSchema
+from auth.schemas.token_schema import TokenSchema
 from auth.schemas.user import UserCreateSchema, UserInDBSchema
 from auth.services.user import UserRepository
 from auth.utils.utils_jwt import decode_jwt

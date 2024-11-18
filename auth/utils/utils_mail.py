@@ -5,7 +5,7 @@ from itsdangerous import URLSafeTimedSerializer
 
 from auth.core.config import settings, setup_logging, templates
 from auth.exceptions import InvalidTokenException
-from auth.schemas.token import TokenDataSchema
+from auth.schemas.token_schema import TokenDataSchema
 from auth.services.email import send_email
 
 setup_logging()
