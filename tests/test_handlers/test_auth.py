@@ -193,7 +193,7 @@ class TestUser:
                                         phone_number="+375332565435",
                                         date_of_birth=None)
         async with api_client as client:
-            response = await client.get("/api/user/get-all-users?page=1&limit=5")
+            response = await client.get("/api/user/users?page=1&limit=5")
 
         assert response.status_code == 200
         data = response.json()
