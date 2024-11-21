@@ -243,8 +243,10 @@ async def verify_user_account_password_forgot(
 async def forgot_password(email: str, new_password: str) -> email_schema.EmailResponseSchema:
     password_hash = await utils_users.hash_password(new_password)
     await utils_mail.forgot_password_send_message(email, password_hash)
-    return email_schema.EmailResponseSchema(message = f"Check up u'r mail: "
-                                                      f"{email}")
+    return email_schema.EmailResponseSchema(
+        message=f"Check up u'r mail: {email}"
+    )
+
 
 @user_router.delete("/me/delete")
 async def delete_me(
