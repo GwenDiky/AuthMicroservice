@@ -34,19 +34,19 @@ class TestRegistration:
         assert response.status_code == 200
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize("invalid_property, expected_status_code", [
+        ({"email": "smth"}, 422),
+        ({"username": "31"}, 422),
+        ({"phone_number": "3982Jdseq"}, 422),
+        ({"phone_number": "+37529328873"}, 422),
+    ])
     async def test_create_user_invalid_body(self, db, api_client,
-                                            user_properties, event_loop):
-        response = await api_client.post(self.url, json=user_properties | {"email":"smth"})
-        assert response.status_code == 422
-
-        response = await api_client.post(self.url, json=user_properties | {"username":"31"})
-        assert response.status_code == 422
-
-        response = await api_client.post(self.url, json=user_properties | {"phone_number": "3982Jdseq"})
-        assert response.status_code == 422
-
-        response = await api_client.post(self.url, json=user_properties | {"phone_number": "+37529328873"})
-        assert response.status_code == 422
+                                            user_properties,
+                                            event_loop, invalid_property,
+                                            expected_status_code):
+        response = await api_client.post(self.url,
+                                         json=user_properties | invalid_property)
+        assert response.status_code == expected_status_code
 
 
 class TestVerification:
