@@ -56,8 +56,10 @@ class TestVerification:
                                        create_user):
         user = await create_user()
 
+        params = {"email": user.email}
+
         async with api_client as client:
-            response = await client.post(self.url + user.email)
+            response = await client.post(self.url, params=params)
 
         assert response.status_code == 200
         assert response.json().get("message") == ("Verification email resend "
