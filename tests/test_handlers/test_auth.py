@@ -16,8 +16,7 @@ import logging
 from auth.core.config import setup_logging
 from auth.services.user import User
 from tests.conftest import event_loop
-from tests.utils.users import (create_user, user_schema,
-                               create_user_by_fields, user_properties)
+from tests.utils.users import (create_user, user_properties)
 from auth.utils.utils_jwt import (
     encode_jwt
 )
@@ -28,9 +27,9 @@ class TestRegistration:
     url = '/api/user/signup'
 
     @pytest.mark.asyncio
-    async def test_create_user(self, db, api_client):
+    async def test_create_user(self, db, api_client, user_properties):
         async with api_client as client:
-            response = await client.post(self.url, json=user_schema.model_dump())
+            response = await client.post(self.url, json=user_properties)
 
         assert response.status_code == 200
 
