@@ -61,9 +61,7 @@ async def resend_verification(
         raise exceptions.MailNotVerifiedException
 
     await utils_mail.create_user_send_message(email)
-    return email_schema.EmailResponseSchema(
-        message="Verification email resend successfully",
-    )
+    return email_schema.EmailResponseSchema()
 
 
 @user_router.post("/login")
@@ -149,7 +147,7 @@ async def logout(
         raise exceptions.InvalidTokenException
 
     await redis_utils.add_token_to_blacklist(token, redis_client)
-    return user.UserMessageSchema(message="Successfully logged out")
+    return user.MessageSchemaLogout()
 
 
 @user_router.put("/change-password")
@@ -215,9 +213,7 @@ async def verify_user_account(
     await UserRepository(db).update_status_of_email_verification(
         user, {"is_verified": True}
     )
-    return email_schema.EmailResponseSchema(
-        f"U'r account '{user.username}' verified " f"successfully!"
-    )
+    return email_schema.EmailResponseSchema()
 
 
 @user_router.get("/reset-password/verify/{token}/{password_hash}")
@@ -234,18 +230,14 @@ async def verify_user_account_password_forgot(
     await UserRepository(db).change_password_of_current_user(user.id,
                                                              password_hash)
 
-    return user.UserMessageSchema(
-        f"Password was changed successfully for " f"current user! {token_data}"
-    )
+    return user.MessageSchemaPasswordChanged()
 
 
 @user_router.post("/forgot-password")
 async def forgot_password(email: str, new_password: str) -> email_schema.EmailResponseSchema:
     password_hash = await utils_users.hash_password(new_password)
     await utils_mail.forgot_password_send_message(email, password_hash)
-    return email_schema.EmailResponseSchema(
-        message=f"Check up u'r mail: {email}"
-    )
+    return email_schema.EmailResponseSchema()
 
 
 @user_router.delete("/me/delete")

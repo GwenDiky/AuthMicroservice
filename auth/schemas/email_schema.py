@@ -8,4 +8,4 @@ class EmailSchema(BaseModel):
 
 
 class EmailResponseSchema(BaseModel):
-    message: str
+    message: str = "Email was sent successfully"

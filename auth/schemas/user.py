@@ -6,6 +6,7 @@ from annotated_types import MinLen, MaxLen
 from pydantic import (
     BaseModel, EmailStr, ConfigDict, Field)
 from pydantic_extra_types.phone_numbers import PhoneNumber
+from auth.schemas.token_schema import TokenSchema
 
 
 class UserSchema(BaseModel):
@@ -63,5 +64,8 @@ class UserUpdateSchema(BaseModel):
     phone_number: Optional[PhoneNumber] = None
 
 
-class UserMessageSchema(BaseModel):
-    message: str
+class MessageSchemaPasswordChanged(BaseModel):
+    message: str = "Password was changed successfully"
+
+class MessageSchemaLogout(BaseModel):
+    message: str = "User successfully logged out"
