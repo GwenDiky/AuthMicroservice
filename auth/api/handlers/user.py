@@ -284,3 +284,29 @@ async def show_users(
         total_records=total_records,
         content=user_schema,
     )
+
+
+@user_router.get("/{id}", response_model=user.UserCreateSchema)
+async def user_by_id(
+        id: int,
+        db: AsyncSession = Depends(get_async_session),
+) -> user.UserCreateSchema:
+    user = await UserRepository(db).get_user_by_id(id)
+    return user
+
+@user_router.get("/{id}/is-superuser")
+async def check_if_superuser(
+        id: int,
+        db: AsyncSession = Depends(get_async_session),
+) -> bool:
+    user = await user_by_id(id, db)
+    if user.is_superuser:
+        return True
+
+@user_router.get("/{id}/email")
+async def user_email_by_id(
+        id: int,
+        db: AsyncSession = Depends(get_async_session),
+) -> str:
+    user = await user_by_id(id, db)
+    return user.email

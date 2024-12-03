@@ -68,8 +68,8 @@ class SqlAlchemyRepository(AbstractRepository):
             query = select(model).where(model.id == id)
             result = await self.db.execute(query)
             obj = result.scalar_one_or_none()
-            if not obj:
-                raise UserNotFoundException
+            # if not obj:
+            #     raise UserNotFoundException
             return obj
         except SQLAlchemyError as db_error:
             logging.error(f"Database error {db_error}")

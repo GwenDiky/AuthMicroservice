@@ -1,5 +1,5 @@
-from typing import Optional
-
+from typing import Optional, List
+from auth.schemas.user import UserSchemaWithoutPassword
 from pydantic import BaseModel, Field
 from sqlalchemy import asc, desc
 
@@ -28,4 +28,4 @@ class PaginationSchema(BaseModel):
     page_size: int
     total_pages: int
     total_records: int
-    content: list
+    content: List[UserSchemaWithoutPassword]
