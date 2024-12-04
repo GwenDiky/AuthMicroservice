@@ -24,6 +24,8 @@ class UserSchema(BaseModel):
 
 
 class UserSchemaWithoutPassword(BaseModel):
+    model_config = ConfigDict(strict=True)
+
     id: int
     username: str
     created_at: date = Field(default_factory=date.today)

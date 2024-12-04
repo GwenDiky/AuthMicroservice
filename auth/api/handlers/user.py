@@ -15,6 +15,8 @@ from auth.services.email import is_email_verified, verify_email
 from auth.services.user import UserRepository
 from auth.utils import (utils_mail, utils_users, utils_jwt, redis_client as
     redis_utils)
+from fastapi_pagination import Page, add_pagination, paginate
+from auth.schemas.user import UserSchemaWithoutPassword
 
 setup_logging()
 
@@ -131,7 +133,7 @@ async def get_info_by_token(
 @user_router.post("/logout")
 async def logout(
         token: str = Depends(oauth2_scheme), redis_client=Depends(redis_utils.get_redis)
-) -> user.UserMessageSchema:
+) -> user.MessageSchemaLogout:
     logging.info(f"Current token: {token}")
 
     if not token:
@@ -202,7 +204,7 @@ async def update_profile_of_current_user(
 @user_router.get("/verify/{token}")
 async def verify_user_account(
         token: str, db: AsyncSession = Depends(get_async_session)
-):
+) -> email_schema.EmailResponseSchema:
     token_data = await utils_mail.decode_url_safe_token(token)
     user_email = token_data.email
 
@@ -220,7 +222,7 @@ async def verify_user_account(
 async def verify_user_account_password_forgot(
         token: str, password_hash: str,
         db: AsyncSession = Depends(get_async_session)
-):
+) -> user.MessageSchemaPasswordChanged:
     token_data = await utils_mail.decode_url_safe_token(token)
     user_email = token_data.get("email")
 
@@ -254,28 +256,13 @@ async def delete_me(
         raise exceptions.AuthFailedException
 
 
-@user_router.get(
-    "/users", response_model=paginator_schema.PaginationSchema,
-response_model_exclude_none=True
-)
+@user_router.get("/users", response_model=Page[UserSchemaWithoutPassword])
 async def show_users(
         paginator: paginator_schema.Paginator = Depends(),
         db: AsyncSession = Depends(get_async_session),
 ):
-    user_schema, total_records = await (UserRepository(db)
-    .get_users_with_pagination(
-        paginator))
-
-    total_pages = (total_records // paginator.limit) + (
-        1 if total_records % paginator.limit != 0 else 0)
-
-    return paginator_schema.PaginationSchema(
-        page_number=paginator.page,
-        page_size=paginator.limit,
-        total_pages=total_pages,
-        total_records=total_records,
-        content=user_schema,
-    )
+    users = await UserRepository(db).get_users_with_pagination(paginator)
+    return paginate(users)
 
 
 @user_router.get("/{id}", response_model=user.UserCreateSchema)
@@ -286,6 +273,7 @@ async def user_by_id(
     user = await UserRepository(db).get_user_by_id(id)
     return user
 
+
 @user_router.get("/{id}/is-superuser")
 async def check_if_superuser(
         id: int,
@@ -294,6 +282,7 @@ async def check_if_superuser(
     user = await user_by_id(id, db)
     if user.is_superuser:
         return True
+
 
 @user_router.get("/{id}/email")
 async def user_email_by_id(

@@ -110,7 +110,6 @@ class UserRepository(SqlAlchemyRepository):
 
     async def get_users_with_pagination(self, paginator):
         users = await super().get_all(paginator)
-        total_records = await super().get_total_count()
         user_schema = [
             UserSchemaWithoutPassword(
                 id=user.id,
@@ -125,4 +124,4 @@ class UserRepository(SqlAlchemyRepository):
             for user in users
         ]
 
-        return user_schema, total_records
+        return user_schema
