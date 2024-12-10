@@ -123,3 +123,26 @@ class MailNotVerifiedException(HTTPException):
             detail="Recipient email is not verified. " "Please verify the email first.",
             headers=headers,
         )
+
+class KafkaConnectionError(Exception):
+    def __init__(self) -> None:
+        super().__init__(
+            status_code=status.HTTP_417_EXPECTATION_FAILED,
+            detail="Kafka connection error",
+        )
+
+class KafkaTimeoutErrorError(Exception):
+    def __init__(self) -> None:
+        super().__init__(
+            status_code=status.HTTP_417_EXPECTATION_FAILED,
+            detail="Kafka timeout error",
+        )
+
+
+class KafkaErrorError(Exception):
+    def __init__(self) -> None:
+        super().__init__(
+            status_code=status.HTTP_417_EXPECTATION_FAILED,
+            detail="Unexpected Kafka error",
+        )
+

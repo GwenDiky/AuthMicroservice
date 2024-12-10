@@ -1,6 +1,6 @@
 import json
 import logging
-from confluent_kafka import Producer, KafkaException
+from confluent_kafka import Producer, KafkaException, KafkaError
 from typing import Any
 from auth.core.config import setup_logging
 from auth.core.config import settings
@@ -20,9 +20,12 @@ class KafkaProducer:
                 callback=self.delivery_report
             )
             self.producer.flush()
-        except KafkaException as e:
-            logger.error("Error while sending event to Kafka: %s", e)
-            raise Exception(f"Kafka error: {str(e)}")
+        except KafkaTimeoutError as e:
+            raise exceptions.KafkaTimeoutError
+        except KafkaConnectionError as e:
+            raise exceptions.KafkaConnectionError
+        except KafkaError as e:
+            raise exceptions.KafkaError
 
     @staticmethod
     def delivery_report(err, msg):
