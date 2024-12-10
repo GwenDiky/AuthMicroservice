@@ -4,14 +4,13 @@ from auth.exceptions import AuthFailedException
 
 
 async def compare_passwords(password, hashed_password):
-    if not bcrypt.checkpw(password.encode("utf-8"),
-                          hashed_password.encode("utf-8")):
+    if not bcrypt.checkpw(password.encode("utf-8"), hashed_password.encode("utf-8")):
         raise AuthFailedException
     return True
 
 
 async def hash_password(
-        password: str,
+    password: str,
 ) -> str:
     salt = bcrypt.gensalt()
     pwd_bytes: bytes = password.encode()
@@ -21,5 +20,4 @@ async def hash_password(
 
 
 async def validate_password(password: str, hashed_password: str) -> bool:
-    return bcrypt.checkpw(password=password.encode(),
-                          hashed_password=hashed_password)
+    return bcrypt.checkpw(password=password.encode(), hashed_password=hashed_password)

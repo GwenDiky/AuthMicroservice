@@ -124,12 +124,14 @@ class MailNotVerifiedException(HTTPException):
             headers=headers,
         )
 
+
 class KafkaConnectionError(Exception):
     def __init__(self) -> None:
         super().__init__(
             status_code=status.HTTP_417_EXPECTATION_FAILED,
             detail="Kafka connection error",
         )
+
 
 class KafkaTimeoutErrorError(Exception):
     def __init__(self) -> None:
@@ -145,4 +147,3 @@ class KafkaErrorError(Exception):
             status_code=status.HTTP_417_EXPECTATION_FAILED,
             detail="Unexpected Kafka error",
         )
-

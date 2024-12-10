@@ -1,5 +1,6 @@
 from fastapi import FastAPI
-from fastapi_pagination import Page, add_pagination, paginate
+from fastapi_pagination import add_pagination
+
 from auth.api.handlers.user import user_router
 
 app = FastAPI()

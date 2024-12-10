@@ -1,7 +1,9 @@
-from typing import Optional, List
-from auth.schemas.user import UserSchemaWithoutPassword
+from typing import List, Optional
+
 from pydantic import BaseModel, Field
 from sqlalchemy import asc, desc
+
+from auth.schemas.user import UserSchemaWithoutPassword
 
 
 class Paginator(BaseModel):
@@ -15,8 +17,7 @@ class Paginator(BaseModel):
             sort_field = getattr(model, self.sort.lstrip("-"), None)
             if sort_field is not None:
                 query = query.order_by(
-                    desc(sort_field) if self.sort.startswith("-") else asc(
-                        sort_field)
+                    desc(sort_field) if self.sort.startswith("-") else asc(sort_field)
                 )
 
         query = query.offset((self.page - 1) * self.limit).limit(self.limit)

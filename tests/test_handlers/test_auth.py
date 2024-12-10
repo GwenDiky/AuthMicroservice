@@ -1,30 +1,18 @@
-from unittest.mock import AsyncMock, patch
-
-from auth.schemas.user import UserCreateSchema
-from auth.schemas.token_schema import TokenSchema
-from auth.services.email import verify_email
-from auth.services.user import UserRepository
-from auth.utils.utils_users import hash_password
-from auth.utils.utils_mail import create_user_send_message
-from auth.api.handlers.user import signup
-from tests.fixtures import db, db_session, api_client, mock_redis_client
-from fastapi.encoders import jsonable_encoder
-import uuid
-import pytest
-from auth.exceptions import AuthFailedException, InvalidTokenException
 import logging
+
+import pytest
+
 from auth.core.config import setup_logging
-from auth.services.user import User
+from auth.utils.utils_jwt import encode_jwt
 from tests.conftest import event_loop
-from tests.utils.users import (create_user, user_properties)
-from auth.utils.utils_jwt import (
-    encode_jwt
-)
+from tests.fixtures import api_client, db, db_session, mock_redis_client
+from tests.utils.users import create_user, user_properties
 
 setup_logging()
 
+
 class TestRegistration:
-    url = '/api/user/signup'
+    url = "/api/user/signup"
 
     @pytest.mark.asyncio
     async def test_create_user(self, db, api_client, user_properties):
@@ -34,26 +22,35 @@ class TestRegistration:
         assert response.status_code == 200
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("invalid_property, expected_status_code", [
-        ({"email": "smth"}, 422),
-        ({"username": "31"}, 422),
-        ({"phone_number": "3982Jdseq"}, 422),
-        ({"phone_number": "+37529328873"}, 422),
-    ])
-    async def test_create_user_invalid_body(self, db, api_client,
-                                            user_properties,
-                                            event_loop, invalid_property,
-                                            expected_status_code):
-        response = await api_client.post(self.url,
-                                         json=user_properties | invalid_property)
+    @pytest.mark.parametrize(
+        "invalid_property, expected_status_code",
+        [
+            ({"email": "smth"}, 422),
+            ({"username": "31"}, 422),
+            ({"phone_number": "3982Jdseq"}, 422),
+            ({"phone_number": "+37529328873"}, 422),
+        ],
+    )
+    async def test_create_user_invalid_body(
+        self,
+        db,
+        api_client,
+        user_properties,
+        event_loop,
+        invalid_property,
+        expected_status_code,
+    ):
+        response = await api_client.post(
+            self.url, json=user_properties | invalid_property
+        )
         assert response.status_code == expected_status_code
 
 
 class TestVerification:
-    url = '/api/user/resend_verification?email='
+    url = "/api/user/resend_verification?email="
+
     @pytest.mark.asyncio
-    async def test_resend_verification(self, api_client, db, event_loop,
-                                       create_user):
+    async def test_resend_verification(self, api_client, db, event_loop, create_user):
         user = await create_user()
 
         params = {"email": user.email}
@@ -62,11 +59,14 @@ class TestVerification:
             response = await client.post(self.url, params=params)
 
         assert response.status_code == 200
-        assert response.json().get("message") == ("Verification email resend "
-                                                  "successfully")
+        assert response.json().get("message") == (
+            "Verification email resend " "successfully"
+        )
 
     @pytest.mark.asyncio
-    async def test_resend_verification_to_invalid_email(self, api_client, db, event_loop):
+    async def test_resend_verification_to_invalid_email(
+        self, api_client, db, event_loop
+    ):
         invalid_email = "non_existent_mail@gmail.com"
         async with api_client as client:
             response = await client.post(self.url + invalid_email)
@@ -74,21 +74,27 @@ class TestVerification:
 
 
 class TestLogin:
-    url = '/api/user/login'
+    url = "/api/user/login"
+
     @pytest.mark.asyncio
-    async def test_login(self, api_client, db, event_loop, create_user,
-                         user_properties):
+    async def test_login(
+        self, api_client, db, event_loop, create_user, user_properties
+    ):
         user = await create_user()
 
         async with api_client as client:
             response = await client.post(
                 self.url,
-                data={"username": user.username, "password":
-                    user_properties.get("password")},
-                headers={"Content-Type": "application/x-www-form-urlencoded"}
+                data={
+                    "username": user.username,
+                    "password": user_properties.get("password"),
+                },
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
             )
 
-        assert response.status_code == 200, f"Unexpected status code: {response.status_code}"
+        assert (
+            response.status_code == 200
+        ), f"Unexpected status code: {response.status_code}"
         assert "access_token" in response.json()
 
     @pytest.mark.asyncio
@@ -100,23 +106,25 @@ class TestLogin:
             response = await client.post(
                 self.url,
                 data={"username": username, "password": password},
-                headers={"Content-Type": "application/x-www-form-urlencoded"}
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
             )
 
         assert response.status_code == 403
 
+
 class TestLogout:
-    url = '/api/user/logout'
+    url = "/api/user/logout"
 
     @pytest.mark.asyncio
-    async def test_logout(self, api_client, db, mock_redis_client,
-                          create_user):
+    async def test_logout(self, api_client, db, mock_redis_client, create_user):
         user = await create_user()
 
         token = await encode_jwt({"sub": user.id, "username": user.username})
 
         async with api_client as client:
-            response = await client.post(self.url, headers={"Authorization": f"Bearer {token}"})
+            response = await client.post(
+                self.url, headers={"Authorization": f"Bearer {token}"}
+            )
 
         assert response.status_code == 200
         assert response.json().get("message") == "Successfully logged out"
@@ -124,21 +132,25 @@ class TestLogout:
     @pytest.mark.asyncio
     async def test_logout_invalid(self, api_client, db, mock_redis_client):
         token = "token"
-        response = await api_client.post(self.url, headers={"Authorization": f"Bearer {token}"})
+        response = await api_client.post(
+            self.url, headers={"Authorization": f"Bearer {token}"}
+        )
         assert response.status_code == 401
 
-        response = await api_client.post(self.url,  headers={})
-        assert  response.status_code == 401
+        response = await api_client.post(self.url, headers={})
+        assert response.status_code == 401
 
         blacklisted_token = "blacklisted_token"
-        response = await api_client.post(self.url, headers={"Authorization": f"Bearer {blacklisted_token}"})
+        response = await api_client.post(
+            self.url, headers={"Authorization": f"Bearer {blacklisted_token}"}
+        )
         assert response.status_code == 401
 
 
 class TestUser:
 
-    url_current_user = '/api/user/me'
-    url_delete_current_user = '/api/user/me/delete'
+    url_current_user = "/api/user/me"
+    url_delete_current_user = "/api/user/me/delete"
 
     @pytest.mark.asyncio
     async def test_delete_me(self, api_client, db, create_user):
@@ -147,11 +159,13 @@ class TestUser:
         token = await encode_jwt({"sub": user.id, "username": user.username})
 
         async with api_client as client:
-            response = await client.delete(self.url_delete_current_user, headers={"Authorization": f"Bearer {token}"})
+            response = await client.delete(
+                self.url_delete_current_user,
+                headers={"Authorization": f"Bearer {token}"},
+            )
 
         assert response.status_code == 200
         assert response.json().get("result") == "Object was deleted"
-
 
     @pytest.mark.asyncio
     async def test_delete_me_invalid_token(self, api_client, db):
@@ -161,21 +175,31 @@ class TestUser:
         assert response.status_code == 401
 
     @pytest.mark.asyncio
-    async def test_get_current_user(self, api_client, db, mock_redis_client,
-                                    create_user):
+    async def test_get_current_user(
+        self, api_client, db, mock_redis_client, create_user
+    ):
         user = await create_user()
-        token = await encode_jwt({"sub": user.id, "username": user.username, "email": user.email})
+        token = await encode_jwt(
+            {"sub": user.id, "username": user.username, "email": user.email}
+        )
 
         async with api_client as client:
-            response = await client.get(self.url_current_user, headers={"Authorization": f"Bearer {token}"})
+            response = await client.get(
+                self.url_current_user, headers={"Authorization": f"Bearer {token}"}
+            )
 
-        assert response.status_code == 200, f"Unexpected status code: {response.status_code}"
+        assert (
+            response.status_code == 200
+        ), f"Unexpected status code: {response.status_code}"
         assert response.json().get("username") == "testuser"
 
     @pytest.mark.asyncio
     async def test_get_current_user_invalid(self, api_client, db, mock_redis_client):
         blacklisted_token = "blacklisted_token"
-        response = await api_client.post(self.url_current_user, headers={"Authorization": f"Bearer {blacklisted_token}"})
+        response = await api_client.post(
+            self.url_current_user,
+            headers={"Authorization": f"Bearer {blacklisted_token}"},
+        )
         assert response.status_code == 405
 
     @pytest.mark.asyncio
@@ -186,7 +210,7 @@ class TestUser:
                 password=f"password{i}",
                 email=f"username{i}@gmail.com",
                 phone_number="+375332565435",
-                date_of_birth=None
+                date_of_birth=None,
             )
 
         async with api_client as client:
@@ -211,45 +235,51 @@ class TestUser:
             assert "is_verified" in user
 
 
-
 class TestAuth:
     @pytest.mark.asyncio
-    async def test_refresh_token(self, api_client, db, mock_redis_client,
-                                 create_user):
+    async def test_refresh_token(self, api_client, db, mock_redis_client, create_user):
         user = await create_user()
         token = await encode_jwt({"sub": user.id, "username": user.username})
 
         async with api_client as client:
-            response = await client.post('/api/user/refresh-token', headers={"Authorization": f"Bearer {token}"})
+            response = await client.post(
+                "/api/user/refresh-token", headers={"Authorization": f"Bearer {token}"}
+            )
 
         assert response.status_code == 200
         assert "access_token" in response.json()
 
     @pytest.mark.asyncio
-    async def test_change_password(self, api_client, db, mock_redis_client,
-                                   create_user):
+    async def test_change_password(
+        self, api_client, db, mock_redis_client, create_user
+    ):
         new_password = "newsecurepassword"
 
         user = await create_user()
         token = await encode_jwt({"sub": user.id, "username": user.username})
 
         async with api_client as client:
-            response = await client.put(f'/api/user/change-password?new_password={new_password}',
-                                        headers={"Authorization": f"Bearer {token}"})
+            response = await client.put(
+                f"/api/user/change-password?new_password={new_password}",
+                headers={"Authorization": f"Bearer {token}"},
+            )
 
         assert response.status_code == 200
         assert response.json().get("id") == user.id
 
     @pytest.mark.asyncio
     async def test_forgot_password(self, api_client, db, create_user):
-        new_password="newpassword"
+        new_password = "newpassword"
         user = await create_user()
         assert user is not None, "User wasn't created"
 
         async with api_client as client:
-            response = await client.post(f'/api/user/forgot-password?email={user.email}&new_password={new_password}')
+            response = await client.post(
+                f"/api/user/forgot-password?email={user.email}&new_password={new_password}"
+            )
 
         assert response.status_code == 200
 
-        assert response.json().get("message") == (f"Check up u'r mail:"
-                                               f" {user.email}")
+        assert response.json().get("message") == (
+            f"Check up u'r mail:" f" {user.email}"
+        )

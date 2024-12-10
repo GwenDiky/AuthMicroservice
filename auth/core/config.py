@@ -43,6 +43,7 @@ class RedisSettings(BaseSettings):
     redis_port: str
     redis_password: str
 
+
 class KafkaSettings(BaseSettings):
     kafka_bootstrap_servers: str
 
@@ -63,6 +64,7 @@ def setup_logging():
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         handlers=[logging.StreamHandler()],
     )
+
 
 templates = Jinja2Templates(directory="templates")
 

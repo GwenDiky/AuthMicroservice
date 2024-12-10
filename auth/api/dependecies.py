@@ -11,8 +11,7 @@ from auth.utils.utils_jwt import decode_jwt
 setup_logging()
 
 
-async def get_current_auth_user(token: str,
-                                db: AsyncSession) -> UserCreateSchema:
+async def get_current_auth_user(token: str, db: AsyncSession) -> UserCreateSchema:
     try:
         payload = await decode_jwt(token)
         username = payload.get("username")
@@ -30,7 +29,7 @@ async def get_current_auth_user(token: str,
 
 
 async def get_info_of_user_by_token(
-        token: TokenSchema, db: AsyncSession
+    token: TokenSchema, db: AsyncSession
 ) -> UserInDBSchema:
     token_credentials = token.access_token
     payload = await decode_jwt(token_credentials)
