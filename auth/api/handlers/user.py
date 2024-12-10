@@ -17,6 +17,8 @@ from auth.utils import (utils_mail, utils_users, utils_jwt, redis_client as
     redis_utils)
 from fastapi_pagination import Page, add_pagination, paginate
 from auth.schemas.user import UserSchemaWithoutPassword
+from auth.core.kafka_producer import KafkaProducer, get_kafka_producer
+from confluent_kafka import Producer
 
 setup_logging()
 
@@ -28,7 +30,9 @@ TOKEN_TYPE = "Bearer"
 
 @user_router.post("/signup")
 async def signup(
-        user: user.UserCreateSchema, db: AsyncSession = Depends(get_async_session)
+        user: user.UserCreateSchema, db: AsyncSession = Depends(
+            get_async_session),
+        kafka_producer: KafkaProducer = Depends(get_kafka_producer)
 ) -> user.UserInDBSchema:
     user.password = await utils_users.hash_password(user.password)
 
@@ -37,6 +41,19 @@ async def signup(
     new_user = User(**user.model_dump())
     try:
         result = await UserRepository(db).add_new_user(new_user)
+        if user.avatar_url:
+            file_name = os.path.basename(user.avatar_url)
+            file_type = file_name.split('.')[-1]
+            kafka_producer.send_event(
+                topic="user-events",
+                key="upload_avatar",
+                value={"event_type": "upload_avatar", "user_id": result.id,
+                       "file_data": {
+                           "file_name": file_name,
+                           "file_type": file_type,
+                           "file_url": user.avatar_url,
+                       }},
+            )
         await utils_mail.create_user_send_message(user.email)
 
     except exceptions.SignUpFailedException:
@@ -184,6 +201,7 @@ async def update_profile_of_current_user(
         user: user.UserUpdateSchema,
         token: str = Depends(oauth2_scheme),
         db: AsyncSession = Depends(get_async_session),
+        kafka_producer: KafkaProducer = Depends(get_kafka_producer)
 ):
     user_data = user.model_dump()
     user_in_db = await dependecies.get_current_auth_user(token, db)
@@ -192,13 +210,45 @@ async def update_profile_of_current_user(
         result = await UserRepository(db).update_profile_of_current_user(
             user_in_db.id, user_data
         )
+
         if not result:
             raise exceptions.ProfileNotChangedException
+
         logging.info("Profile was changed successfully")
+
+        if user_in_db.avatar_url != result.avatar_url:
+            if result.avatar_url:
+                file_name = os.path.basename(result.avatar_url)
+                file_type = file_name.split('.')[-1]
+                kafka_producer.send_event(
+                    topic="user-events",
+                    key="update_avatar",
+                    value={
+                        "event_type": "update_avatar",
+                        "user_id": result.id,
+                        "file_data": {
+                            "file_name": file_name,
+                            "file_type": file_type,
+                            "file_url": result.avatar_url,
+                        }
+                    },
+                )
+            else:
+                kafka_producer.send_event(
+                    topic="user-events",
+                    key="delete_avatar",
+                    value={
+                        "event_type": "delete_avatar",
+                        "user_id": result.id,
+                    }
+                )
+
         return result
 
     except PyJWTError:
         raise exceptions.AuthFailedException
+    except exceptions.ProfileNotChangedException:
+        raise HTTPException(status_code=400, detail="Profile was not changed")
 
 
 @user_router.get("/verify/{token}")
@@ -245,15 +295,31 @@ async def forgot_password(email: str, new_password: str) -> email_schema.EmailRe
 @user_router.delete("/me/delete")
 async def delete_me(
         token: str = Depends(oauth2_scheme),
-        db: AsyncSession = Depends(get_async_session)
+        db: AsyncSession = Depends(get_async_session),
+        kafka_producer: KafkaProducer = Depends(get_kafka_producer)
 ) -> dict:
     user = await dependecies.get_current_auth_user(token, db)
 
     try:
+        if user.avatar_url:
+            kafka_producer.send_event(
+                topic="user-events",
+                key="delete_avatar",
+                value={
+                    "event_type": "delete_avatar",
+                    "user_id": user.id,
+                    "file_data": {
+                        "file_name": os.path.basename(user.avatar_url),
+                        "file_type": user.avatar_url.split('.')[-1],
+                        "file_url": user.avatar_url,
+                    }
+                },
+            )
         result = await UserRepository(db).delete_user(user.id)
         return result
     except PyJWTError:
         raise exceptions.AuthFailedException
+
 
 
 @user_router.get("/users", response_model=Page[UserSchemaWithoutPassword])

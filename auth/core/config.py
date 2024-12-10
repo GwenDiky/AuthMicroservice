@@ -43,12 +43,16 @@ class RedisSettings(BaseSettings):
     redis_port: str
     redis_password: str
 
+class KafkaSettings(BaseSettings):
+    kafka_bootstrap_servers: str
+
 
 class Settings(BaseSettings):
     db: DbSettings = DbSettings()
     jwt: JWTSettings = JWTSettings()
     mail: MailSettings = MailSettings()
     redis: RedisSettings = RedisSettings()
+    kafka: KafkaSettings = KafkaSettings()
 
     domain: str
 

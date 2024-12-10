@@ -1,0 +1,16 @@
+{
+  "Body": {
+    "text_part": null,
+    "html_part": "Your verification email body here."
+  },
+  "Destination": {
+    "ToAddresses": [
+      "viyaleta.chachanets@pynest.io"
+    ]
+  },
+  "Id": "xnmlrglmlvsvqjlc-rekafbpq-mrdz-mopz-rscv-knszhpwzgpha-lgxrzn",
+  "Region": "eu-central-1",
+  "Source": "sefora.abigail18@gmail.com",
+  "Subject": "Verification Email",
+  "Timestamp": "2024-10-31T09:33:06"
+}

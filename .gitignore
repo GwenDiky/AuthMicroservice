@@ -278,13 +278,5 @@ infrastracture/poetry.lock
 docker/data
 .idea
 .DS_Store
-**/.DS_Store
-
-/alembic/
-alembic.ini
-/migration/
-
-/localstack/
-poetry.lock
-
+**/.DS_Stor
 h --force-with-lease
