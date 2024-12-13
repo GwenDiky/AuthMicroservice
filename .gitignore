@@ -268,7 +268,7 @@ todo/accounts/__pycache__/
 todo/main/__pycache__/
 
 
-#rabbitmq
+# rabbitmq
 rabbitmq-data/
 rabbitmq-log/
 
@@ -280,3 +280,6 @@ docker/data
 .DS_Store
 **/.DS_Stor
 h --force-with-lease
+
+# localstack
+localstack/cache/
