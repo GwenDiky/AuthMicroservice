@@ -268,7 +268,7 @@ todo/accounts/__pycache__/
 todo/main/__pycache__/
 
 
-#rabbitmq
+# rabbitmq
 rabbitmq-data/
 rabbitmq-log/
 
@@ -278,11 +278,8 @@ infrastracture/poetry.lock
 docker/data
 .idea
 .DS_Store
-**/.DS_Store
+**/.DS_Stor
+h --force-with-lease
 
-/alembic/
-alembic.ini
-/migration/
-
-/localstack/
-poetry.lock
+# localstack
+localstack/cache/

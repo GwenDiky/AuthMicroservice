@@ -5,7 +5,7 @@ from itsdangerous import URLSafeTimedSerializer
 
 from auth.core.config import settings, setup_logging, templates
 from auth.exceptions import InvalidTokenException
-from auth.schemas.token import TokenDataSchema
+from auth.schemas.token_schema import TokenDataSchema
 from auth.services.email import send_email
 
 setup_logging()
@@ -42,8 +42,7 @@ async def forgot_password_send_message(email: str, password_hash: str) -> None:
         f"http://{settings.domain}/api/user/reset-password/verify/"
         f"{token}/{password_hash}"
     )
-    html_body = templates.get_template("forgot-password.html").render(
-        link=link)
+    html_body = templates.get_template("forgot-password.html").render(link=link)
     await send_email(
         recipients=[email],
         subject="Verify your email",

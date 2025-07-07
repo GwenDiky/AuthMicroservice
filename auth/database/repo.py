@@ -55,7 +55,7 @@ class SqlAlchemyRepository(AbstractRepository):
             await self.db.refresh(new_object)
         except SQLAlchemyError as db_error:
             await self.db.rollback()
-            logging.error(f"Error occurred: {db_error}")
+            logging.error("Error occurred: %s", db_error)
             raise SignUpFailedException
         return new_object
 
@@ -68,11 +68,11 @@ class SqlAlchemyRepository(AbstractRepository):
             query = select(model).where(model.id == id)
             result = await self.db.execute(query)
             obj = result.scalar_one_or_none()
-            if not obj:
-                raise UserNotFoundException
+            # if not obj:
+            #     raise UserNotFoundException
             return obj
         except SQLAlchemyError as db_error:
-            logging.error(f"Database error {db_error}")
+            logging.error("Database error: %s", db_error)
             raise BadRequestException(f"Database error: {db_error}")
 
     async def delete_obj(self, model: Base, id: int):
@@ -114,7 +114,7 @@ class SqlAlchemyRepository(AbstractRepository):
 
         except SQLAlchemyError as db_error:
             await self.db.rollback()
-            logging.error(f"Error occurred: {db_error}")
+            logging.error("Error occurred: %s", db_error)
             raise BadRequestException(f"Database error: {db_error}")
 
         return model
@@ -139,5 +139,4 @@ class SqlAlchemyRepository(AbstractRepository):
     def convert_columns(model, columns):
         if columns is None or columns == "all":
             return [model]
-        else:
-            return [getattr(model, col.strip()) for col in columns.split("-")]
+        return [getattr(model, col.strip()) for col in columns.split("-")]

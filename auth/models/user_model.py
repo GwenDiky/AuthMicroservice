@@ -16,6 +16,7 @@ class User(Base):
     password = Column("password", String)
     email = Column("email", String, nullable=False, unique=True)
     created_at = Column("created_at", Date, default=datetime.now)
-    date_of_birth = Column("date_of_birth", Date, default=None)
+    date_of_birth = Column("date_of_birth", Date, default=None, nullable=True)
     phone_number = Column("phone_number", String, nullable=True)
     is_superuser = Column("is_superuser", Boolean, default=False)
+    avatar_url = Column("avatar_url", String, nullable=True)

@@ -12,15 +12,13 @@ TOKEN_EXPIRATION_TIME = settings.jwt.access_token_expire_minutes
 
 
 async def get_redis() -> redis:
-    return await redis.from_url(REDIS_URL, encoding="utf-8",
-                                decode_responses=True)
+    return await redis.from_url(REDIS_URL, encoding="utf-8", decode_responses=True)
 
 
 async def add_token_to_blacklist(
-        token: str, redis_client, expiration: int = TOKEN_EXPIRATION_TIME
+    token: str, redis_client, expiration: int = TOKEN_EXPIRATION_TIME
 ) -> None:
-    await redis_client.setex(token, timedelta(minutes=expiration),
-                             "blacklisted")
+    await redis_client.setex(token, timedelta(minutes=expiration), "blacklisted")
     logging.info("Token marked as blacklisted")
 
 

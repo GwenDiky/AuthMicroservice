@@ -1,4 +1,5 @@
 import uvicorn
+
 from auth.api.routers import app
 
 if __name__ == "__main__":
