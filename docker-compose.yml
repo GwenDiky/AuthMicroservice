@@ -1,0 +1,130 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: "auth-auth"
+    volumes:
+      - .:/app
+    ports:
+      - "8083:8083"
+    env_file:
+      - .env
+    environment:
+      - PYTHONBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONPATH=/app
+    depends_on:
+      - redis
+      - localstack
+      - pgdb_auth
+    networks:
+      - shared_network
+
+  pgdb_auth:
+    image: postgres:bullseye
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    env_file:
+      - .env
+    container_name: pgdb_auth
+    ports:
+      - "5434:5432"
+    networks:
+      - shared_network
+
+  redis:
+    image: redis:alpine
+    expose:
+      - 6379
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - shared_network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: 'rabbitmq_auth'
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - ./rabbitmq-data:/var/lib/rabbitmq/
+      - ./rabbitmq-log:/var/log/rabbitmq
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - shared_network
+
+  zookeeper:
+    image: 'bitnami/zookeeper:latest'
+    ports:
+      - '2187:2187'
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    networks:
+      - shared_network
+
+  kafka:
+    image: 'bitnami/kafka:3.3.2-debian-11-r183'
+    ports:
+      - "9097:9092"
+      - "29097:29092"
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://0.0.0.0:9092,EXTERNAL://0.0.0.0:29092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,EXTERNAL://localhost:29092
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ADVERTISED_HOST=localhost
+    healthcheck:
+      test: [ "CMD-SHELL", "kafka-topics.sh --bootstrap-server 127.0.0.1:9092 --list" ]
+      interval: 5s
+      retries: 10
+    depends_on:
+      - zookeeper
+    networks:
+      - shared_network
+    env_file:
+      - .env
+
+  localstack:
+    image: localstack/localstack
+    environment:
+      - SERVICES=ses
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=authmicro
+      - AWS_SECRET_ACCESS_KEY=authmicro
+      - DEBUG=1
+      - PERSISTENCE=1
+    ports:
+      - "4566:4566"
+    volumes:
+      - "./localstack:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    networks:
+      - shared_network
+
+volumes:
+  postgres-data:
+  redis-data:
+  localstack-data:
+
+networks:
+  shared_network:
+    external: true
